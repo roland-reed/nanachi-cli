@@ -19,9 +19,15 @@ export const getAnuPath = (): string => {
     } catch (error) {
       if (!isInit) {
         spinner.warn(
-          chalk`Cannot resolve {cyan anujs}, ` +
-            chalk`if you haven't install {cyan anujs}, execute {cyan npm install anujs}, ` +
-            chalk`if you forgot to execute {cyan npm install}, execute it. `
+          chalk`Cannot resolve {cyan anujs}
+  if you are a app developer:
+    a) execute {cyan npm install anujs}
+    b) or, execute {cyan npm install}
+  if you are a CLI developer:
+    a) cd [PATH_OF_ANUJS]
+    b) execute {cyan npm link} or {cyan yarn link}
+    c) cd [PATH_OF_YOUR_APP]
+    d) execute {cyan npm link anujs} or {cyan yarn link anujs}`
         );
         spinner.stop();
         process.exit(1);

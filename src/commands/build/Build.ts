@@ -1,15 +1,15 @@
-import rollup from 'rollup';
-import * as path from 'path';
-import * as fs from 'fs-extra';
 import chalk from 'chalk';
 import chokidar from 'chokidar';
-import inputOptions from './inputOptions';
-import Entry from './Entry';
-import AppEntry from './AppEntry';
-import JSEntry from './JSEntry';
-import StyleEntry from './StyleEntry';
+import * as fs from 'fs-extra';
+import * as path from 'path';
+import rollup from 'rollup';
 import * as spinner from '../../shared/spinner';
+import AppEntry from './AppEntry';
+import Entry from './Entry';
+import inputOptions from './inputOptions';
+import JSEntry from './JSEntry';
 import Module from './Module';
+import StyleEntry from './StyleEntry';
 import { getAnuPath } from './utils';
 export default class {
   private files: Map<string, Entry | JSEntry | Module>;
