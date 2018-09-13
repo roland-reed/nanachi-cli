@@ -31,6 +31,10 @@ export function fail(message: string): void {
   spinner.fail(message);
 }
 
+export function warn(message: string): void {
+  spinner.warn(message);
+}
+
 export function changeText(message: string): void {
   spinner.text = message;
 }

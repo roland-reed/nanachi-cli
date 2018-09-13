@@ -10,22 +10,14 @@ import JSEntry from './JSEntry';
 import StyleEntry from './StyleEntry';
 import * as spinner from '../../shared/spinner';
 import Module from './Module';
-import resolve from 'resolve';
-
-const resolveAsynchronously = (id: string, opts: object): Promise<string> =>
-  new Promise((r, reject) => {
-    resolve(id, opts, (err, res) => {
-      if (err) reject(err);
-      r(res);
-    });
-  });
-
+import { getAnuPath } from './utils';
 export default class {
   private files: Map<string, Entry | JSEntry | Module>;
   private cwd: string;
   private srcDir: string;
   private destDir: string;
   private watcher: chokidar.FSWatcher;
+  private nodeModulesFiles: string[];
   constructor({
     cwd = process.cwd(),
     srcDir = 'src',
@@ -39,6 +31,7 @@ export default class {
     this.srcDir = srcDir;
     this.destDir = destDir;
     this.files = new Map();
+    this.nodeModulesFiles = [];
   }
   public async build() {
     this.beforeStart();
@@ -49,6 +42,9 @@ export default class {
   public async start() {
     await this.build();
     this.watch();
+    spinner.succeed(
+      chalk`Starting incremental compilation at {cyan ${this.srcDir}}\n`
+    );
   }
   private watch() {
     this.watcher = chokidar.watch(path.resolve(this.cwd, this.srcDir));
@@ -71,9 +67,6 @@ export default class {
     createEventHandler('change');
     createEventHandler('unlink');
     process.on('SIGINT', this.beforeExitLog);
-    spinner.succeed(
-      chalk`Starting incremental compilation at {cyan ${this.srcDir}}`
-    );
   }
   private async watchChange(changedPath: string) {
     const file = this.files.get(changedPath);
@@ -90,6 +83,7 @@ export default class {
   }
   private async watchAdd(addedPath: string) {
     if (this.files.has(addedPath)) return;
+    if (path.parse(addedPath).ext !== '.js') return;
     this.createModule({
       sourcePath: addedPath,
       cwd: this.cwd,
@@ -110,7 +104,7 @@ export default class {
     );
   }
   private beforeExitLog() {
-    spinner.stop('Bye!');
+    spinner.stop(chalk`{green.bold \nBye!}`);
     process.exit(0);
   }
   private createModule(
@@ -130,6 +124,7 @@ export default class {
         this.files.set(module.sourcePath, new AppEntry(module));
         break;
       case /node_modules/.test(module.sourcePath):
+        this.nodeModulesFiles.push(module.sourcePath);
         this.files.set(
           module.sourcePath,
           new Module({
@@ -158,7 +153,7 @@ export default class {
     const bundle = await rollup.rollup(inputOptions);
     const modules = bundle.modules.map(module => ({
       sourcePath: module.id,
-      code: module.code,
+      code: '',
       originalCode: module.originalCode,
       cwd: this.cwd,
       srcDir: this.srcDir,
@@ -167,15 +162,18 @@ export default class {
     modules.push({
       originalCode: '',
       code: '',
-      sourcePath: await resolveAsynchronously('anujs/dist/ReactWX.js', {
-        basedir: this.cwd
-      }),
+      sourcePath: getAnuPath(),
       cwd: this.cwd,
       srcDir: this.srcDir,
       destDir: this.destDir
     });
     this.files = new Map();
-    modules.forEach(this.createModule, this);
+    // rollup 在使用了 rollup-plugin-commonjs 插件之后
+    // 会存在以 commonjs-proxy: 开头的路径
+    // 需要过滤掉
+    modules
+      .filter(module => path.isAbsolute(module.sourcePath))
+      .forEach(this.createModule, this);
     spinner.succeed(
       chalk`dependencies collected, {cyan ${this.files.size.toString()}} entries total`
     );

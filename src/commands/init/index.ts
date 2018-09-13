@@ -57,12 +57,18 @@ export default async function init(): Promise<void> {
       },
       {
         choices: [
-          registryName('qunar', Registry.qunar),
-          registryName('taobao', Registry.taobao),
-          registryName('cnpm', Registry.cnpm),
-          registryName('npm', Registry.npm)
+          {
+            name: registryName('qunar', Registry.qunar),
+            value: Registry.qunar
+          },
+          {
+            name: registryName('taobao', Registry.taobao),
+            value: Registry.taobao
+          },
+          { name: registryName('cnpm', Registry.cnpm), value: Registry.cnpm },
+          { name: registryName('npm', Registry.npm), value: Registry.npm }
         ],
-        default: Registry.npm,
+        default: registryName('qunar', Registry.qunar),
         message: 'Choose a registry to use',
         name: 'registry',
         type: 'list'

@@ -1,13 +1,16 @@
 const { transform } = require('../src/translator/jsTransform');
 const { wxml } = require('../src/translator/bridge');
 import * as path from 'path';
+import chalk from 'chalk';
 import t from 'babel-types';
 import traverse from 'babel-traverse';
+import * as spinner from '../../shared/spinner';
 import Entry from './Entry';
-import { FILE_TYPE_JS } from './fileType';
 import { IEntryOptions } from './Entry';
 import babylon from 'babylon';
 import generate from 'babel-generator';
+import { formatSize } from './utils';
+import { getAlias } from './requireAlias';
 
 export default class JSEntry extends Entry {
   public type: symbol;
@@ -15,7 +18,6 @@ export default class JSEntry extends Entry {
   private listen: boolean;
   constructor(options: IEntryOptions) {
     super(options);
-    this.type = FILE_TYPE_JS;
     this.listen = false;
     this.listenWxml();
   }
@@ -35,16 +37,81 @@ export default class JSEntry extends Entry {
     this.parse();
     this.replaceImport();
     this.transform();
+    this.logFiles();
     await super.process();
     this.ast = null;
     await super.reset();
+  }
+  private getRelativePath(filePath: string) {
+    return path.relative(this.getCwd(), filePath);
+  }
+  private logFiles() {
+    const emittedFiles = {
+      originalFile: {
+        path: this.getRelativePath(this.getSourcePath()),
+        size: this.getOriginalCode().length
+      },
+      compiledFile: {
+        path: this.getRelativePath(this.getDestinationPath()),
+        size: this.getCode().length
+      },
+      generatedFiles: this.getExtraFiles()
+        .filter(file => file.type === 'write')
+        .map(file => ({
+          path: this.getRelativePath(file.destinationPath),
+          size: file.content.length
+        })),
+      copiedFiles: this.getExtraFiles()
+        .filter(file => file.type === 'copy')
+        .map(file => ({
+          path: this.getRelativePath(file.destinationPath),
+          size: 0
+        }))
+    };
+    let logString: string = '';
+    let indent: string = '';
+
+    logString += chalk`{green.bold Entry:} {underline ${
+      emittedFiles.originalFile.path
+    }} ${formatSize(emittedFiles.originalFile.size)}`;
+    indent += '  ';
+    logString += '\n';
+
+    logString += chalk`${indent}{blue.bold Output:} {underline ${
+      emittedFiles.compiledFile.path
+    }} ${formatSize(emittedFiles.compiledFile.size)}`;
+    logString += '\n';
+
+    emittedFiles.generatedFiles.forEach(
+      ({ path: filePath, size }: { path: string; size: number }) => {
+        logString += chalk`${indent}{magenta.bold Generate:} {underline ${filePath}} ${formatSize(
+          size
+        )}`;
+        logString += '\n';
+      }
+    );
+
+    emittedFiles.copiedFiles.forEach(
+      ({ path: filePath, size }: { path: string; size: number }) => {
+        logString += chalk`${indent}{cyan.bold Copy:} {underline ${filePath}} ${formatSize(
+          size
+        )}`;
+        logString += '\n';
+      }
+    );
+
+    spinner.stop();
+    // tslint:disable-next-line
+    console.log(logString);
   }
   private replaceImport() {
     traverse(this.ast, {
       ImportDeclaration: astPath => {
         const id = astPath.node.source.value;
-        if (id.startsWith('@')) {
-          let relativePath = path.relative(
+        let relativePath = '';
+        if (id === '@react') {
+          // debugger
+          relativePath = path.relative(
             path.parse(path.resolve(this.getCwd(), this.getDestinationPath()))
               .dir,
             path.resolve(
@@ -54,11 +121,29 @@ export default class JSEntry extends Entry {
               'anujs/dist/ReactWX.js'
             )
           );
-          if (!relativePath.startsWith('./')) {
-            relativePath = './' + relativePath;
-          }
-          astPath.node.source.value = relativePath;
         }
+        if (id.startsWith('.')) relativePath = id;
+        if (!relativePath) {
+          const relativePathToNodeModules = path.relative(
+            path.resolve(this.getCwd(), 'node_modules'),
+            getAlias(id, this.getSourceDir())
+          );
+          const absolutePathOfDist = path.resolve(
+            this.getCwd(),
+            this.getDestDir(),
+            'npm',
+            relativePathToNodeModules
+          );
+          const destinationPath = path.resolve(
+            this.getCwd(),
+            this.getDestinationPath()
+          );
+          relativePath = path.relative(
+            path.parse(destinationPath).dir,
+            absolutePathOfDist
+          );
+        }
+        astPath.node.source.value = relativePath;
       },
       JSXAttribute: astPath => {
         if (astPath.node.name.name === 'src') {
@@ -81,6 +166,15 @@ export default class JSEntry extends Entry {
         }
       },
       ClassProperty: astPath => {
+        const configPath: string = path.resolve(
+          this.getDestinationDir(),
+          `${path.parse(this.getSourcePath()).name}.json`
+        );
+        if (
+          this.getExtraFiles().some(file => file.destinationPath === configPath)
+        ) {
+          return;
+        }
         if (
           t.isIdentifier(astPath.node.key, {
             name: 'config'
@@ -95,12 +189,8 @@ export default class JSEntry extends Entry {
             })`
           );
           this.appendExtraFile({
-            sourcePath: '',
             type: 'write',
-            destinationPath: path.resolve(
-              this.getDestinationDir(),
-              `${path.parse(this.getSourcePath()).name}.json`
-            ),
+            destinationPath: configPath,
             content: JSON.stringify(pageConfig)
           });
         }

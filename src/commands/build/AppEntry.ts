@@ -73,12 +73,20 @@ export default class AppEntry extends JSEntry {
     });
   }
   private stringifyAppJSON() {
-    this.appJSON = JSON.stringify(this.appConfig, null, 4);
+    this.appJSON = JSON.stringify(
+      { ...this.appConfig, pages: this.pages },
+      null,
+      4
+    );
   }
   private processPages() {
     this.pages = this.pages.filter(this.isPage).map(page => page.slice(2));
   }
   private setAppJSON() {
-    this.setCode(this.appJSON);
+    this.appendExtraFile({
+      type: 'write',
+      destinationPath: path.resolve(this.getDestinationDir(), 'app.json'),
+      content: this.appJSON
+    });
   }
 }

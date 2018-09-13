@@ -19,7 +19,10 @@ export default {
     'babel-generator',
     'babel-types',
     'resolve',
-    'chokidar'
+    'chokidar',
+    'yargs',
+    'less',
+    'node-sass'
   ],
   plugins: [
     rollupPluginBabel({

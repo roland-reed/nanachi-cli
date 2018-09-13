@@ -1,18 +1,16 @@
-import babylon from 'babylon';
-import traverse from 'babel-traverse';
 import * as path from 'path';
 import Entry from './Entry';
-import { FILE_TYPE_LESS } from './fileType';
 import { IEntryOptions } from './Entry';
+import { renderLess, renderSass } from './utils';
 
 export default class StyleEntry extends Entry {
-  public type: symbol;
+  private ext: string;
   constructor(options: IEntryOptions) {
     super(options);
-    this.type = FILE_TYPE_LESS;
+    this.ext = path.parse(this.getSourcePath()).ext;
   }
   public async process() {
-    this.transform();
+    await this.transform();
     this.modifyExt();
     super.process();
   }
@@ -23,13 +21,25 @@ export default class StyleEntry extends Entry {
     pathTokens.splice(-1, 1, `${name}.wxss`);
     this.setDestinationPath(pathTokens.join(path.sep));
   }
-  private transform() {
-    const ast = babylon.parse(this.getCode(), { sourceType: 'module' });
-    const self = this;
-    traverse(ast, {
-      StringLiteral(astPath) {
-        self.setCode(astPath.node.value);
-      }
-    });
+  private async transform() {
+    switch (this.ext) {
+      case '.sass':
+      case '.scss':
+        this.setCode(
+          (await renderSass({
+            data: this.getOriginalCode()
+          })).css.toString()
+        );
+        break;
+
+      case '.less':
+        const css = (await renderLess(this.getOriginalCode(), {
+          filename: this.getSourcePath()
+        })).css;
+        this.setCode(css);
+
+      default:
+        break;
+    }
   }
 }
