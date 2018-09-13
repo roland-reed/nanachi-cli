@@ -4,9 +4,6 @@ import nodeSass from 'node-sass';
 import less from 'less';
 import * as spinner from '../../shared/spinner';
 import yargs from 'yargs';
-import rollup from 'rollup';
-const rollupPluginNodeResolve = require('rollup-plugin-node-resolve');
-const rollupPluginCommonjs = require('rollup-plugin-commonjs');
 
 let anujsPath: string;
 const isInit: boolean = yargs.argv[0] === 'init';

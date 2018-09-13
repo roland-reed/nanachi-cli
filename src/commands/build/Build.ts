@@ -16,20 +16,24 @@ export default class {
   private cwd: string;
   private srcDir: string;
   private destDir: string;
+  private assetsDir: string;
   private watcher: chokidar.FSWatcher;
   private nodeModulesFiles: string[];
   constructor({
     cwd = process.cwd(),
     srcDir = 'src',
-    destDir = 'dist'
+    destDir = 'dist',
+    assetsDir = 'assets'
   }: {
     cwd?: string;
     srcDir?: string;
     destDir?: string;
+    assetsDir?: string;
   }) {
     this.cwd = cwd;
     this.srcDir = srcDir;
     this.destDir = destDir;
+    this.assetsDir = assetsDir;
     this.files = new Map();
     this.nodeModulesFiles = [];
   }
@@ -44,6 +48,16 @@ export default class {
     this.watch();
     spinner.succeed(
       chalk`Starting incremental compilation at {cyan ${this.srcDir}}\n`
+    );
+  }
+  private async copyStatics() {
+    const sourceDir = path.resolve(this.cwd, this.srcDir, this.assetsDir);
+    const destinationDir = path.resolve(this.cwd, this.destDir, this.assetsDir);
+    const relativeSourceDir = path.relative(this.cwd, sourceDir);
+    const relativeDestinationDir = path.relative(this.cwd, destinationDir);
+    await fs.copy(sourceDir, destinationDir);
+    spinner.succeed(
+      chalk`Copied files from {cyan ${relativeSourceDir}} to {cyan ${relativeDestinationDir}}\n`
     );
   }
   private watch() {
@@ -189,6 +203,7 @@ export default class {
   }
   private async process() {
     await this.emptyDir();
+    await this.copyStatics();
     const processes: Array<Promise<void>> = [];
     this.files.forEach(file => processes.push(file.process()));
     await Promise.all(processes);
