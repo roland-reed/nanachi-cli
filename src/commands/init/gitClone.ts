@@ -1,7 +1,7 @@
+import chalk from 'chalk';
 import { spawn } from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import chalk from 'chalk';
 
 function clone({
   gitRepository,
@@ -33,19 +33,22 @@ async function init({
   gitRepository: string;
   checkout?: string;
   target: string;
-}): Promise<undefined> {
+}) {
   const targetPath = path.resolve(process.cwd(), target);
 
   if (await fs.pathExists(targetPath)) {
-    // tslint:disable-next-line
+    /* tslint:disable */
     console.log(`${targetPath} is already existed, try another name`);
+    /* tslint:enable */
   }
 
-  return clone({
+  await clone({
     checkout,
     gitRepository,
     target
   });
+
+  await fs.remove(path.resolve(targetPath, '.git'));
 }
 
 export default init;

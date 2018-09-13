@@ -1,10 +1,10 @@
-import JSEntry from './JSEntry';
-import traverse from 'babel-traverse';
-import fs from 'fs-extra';
-import t from 'babel-types';
-import * as path from 'path';
 import generate from 'babel-generator';
+import traverse from 'babel-traverse';
+import t from 'babel-types';
+import fs from 'fs-extra';
+import * as path from 'path';
 import { IEntryOptions } from './Entry';
+import JSEntry from './JSEntry';
 
 export default class AppEntry extends JSEntry {
   private appConfig: object;

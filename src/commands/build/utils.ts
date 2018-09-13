@@ -1,12 +1,12 @@
-import resolve from 'resolve';
 import chalk from 'chalk';
-import nodeSass from 'node-sass';
 import less from 'less';
-import * as spinner from '../../shared/spinner';
+import nodeSass from 'node-sass';
+import resolve from 'resolve';
 import yargs from 'yargs';
+import * as spinner from '../../shared/spinner';
 
 let anujsPath: string;
-const isInit: boolean = yargs.argv[0] === 'init';
+const isInit: boolean = yargs.argv._[0] === 'init';
 
 export const getAnuPath = (): string => {
   if (anujsPath) {

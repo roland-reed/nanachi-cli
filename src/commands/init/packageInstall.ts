@@ -1,5 +1,5 @@
-import { spawn } from 'child_process';
 import chalk from 'chalk';
+import { spawn } from 'child_process';
 import * as spinner from '../../shared/spinner';
 
 export default async function start(
@@ -19,7 +19,7 @@ export default async function start(
 
 function install(registry: string, cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const args = ['install', `--registry=${registry}`];
+    const args = ['install', '--registry', registry];
     spinner.start(chalk`{cyan npm} ${args.join(' ')} at {cyan ${cwd}}`);
     const cp = spawn('npm', args, { cwd });
     cp.on('error', reject);

@@ -1,5 +1,5 @@
-import resolve from 'resolve';
 import * as path from 'path';
+import resolve from 'resolve';
 
 const alias: {
   [property: string]: string;

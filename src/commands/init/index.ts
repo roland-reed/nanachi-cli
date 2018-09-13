@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import * as path from 'path';
 import * as spinner from '../../shared/spinner';
-import gitClone from './git-clone';
-import install from './package-install';
+import gitClone from './gitClone';
+import install from './packageInstall';
 const inquirer = require('inquirer');
 const validateNpmPackageName = require('validate-npm-package-name');
 
