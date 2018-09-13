@@ -3,44 +3,28 @@ import * as path from 'path';
 import * as spinner from '../../shared/spinner';
 import gitClone from './gitClone';
 import install from './packageInstall';
+import { choices as RegistryChoices, defaultRegistry } from './Registry';
+import { choices as templateChoices, TEMPLATES } from './templates';
 const inquirer = require('inquirer');
 const validateNpmPackageName = require('validate-npm-package-name');
 
-const enum Registry {
-  qunar = 'http://npmrepo.corp.qunar.com/',
-  taobao = 'https://registry.npm.taobao.org/',
-  cnpm = 'https://r.cnpmjs.org/',
-  npm = 'https://registry.npmjs.org/'
+export interface InterfaceAnswers {
+  name: string;
+  template: string;
+  registry: string;
+  git: boolean;
 }
 
-const TEMPLATES: {
-  [property: string]: {
-    url: string;
-    checkout: string;
-  };
-} = {
-  qunar: {
-    checkout: 'gaoxiaolin',
-    url: 'git@gitlab.corp.qunar.com:qincheng.zhong/anuwx.git'
-  }
-};
-
-const registryName = (name: string, registry: string): string =>
-  `${name} (${registry})`;
-
-export default async function init(): Promise<void> {
+export default async function init() {
   try {
     const {
       name,
       template,
-      registry
-    }: {
-      name: string;
-      template: string;
-      registry: string;
-    } = await inquirer.prompt([
+      registry,
+      git = false
+    }: InterfaceAnswers = await inquirer.prompt([
       {
-        message: 'Project name',
+        message: 'Name your project',
         name: 'name',
         type: 'input',
         validate(v: string) {
@@ -50,28 +34,22 @@ export default async function init(): Promise<void> {
         }
       },
       {
-        choices: ['qunar'],
+        choices: templateChoices,
         message: 'Choose a template',
         name: 'template',
         type: 'list'
       },
       {
-        choices: [
-          {
-            name: registryName('qunar', Registry.qunar),
-            value: Registry.qunar
-          },
-          {
-            name: registryName('taobao', Registry.taobao),
-            value: Registry.taobao
-          },
-          { name: registryName('cnpm', Registry.cnpm), value: Registry.cnpm },
-          { name: registryName('npm', Registry.npm), value: Registry.npm }
-        ],
-        default: registryName('qunar', Registry.qunar),
-        message: 'Choose a registry to use',
+        choices: RegistryChoices,
+        default: defaultRegistry,
+        message: 'Choose a registry',
         name: 'registry',
         type: 'list'
+      },
+      {
+        message: 'Need a git repository?',
+        type: 'confirm',
+        name: 'git'
       }
     ]);
 
@@ -80,7 +58,8 @@ export default async function init(): Promise<void> {
     await gitClone({
       checkout: TEMPLATES[template].checkout,
       gitRepository: TEMPLATES[template].url,
-      target: name
+      target: name,
+      git
     });
 
     spinner.succeed('template cloned');

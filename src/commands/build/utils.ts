@@ -6,7 +6,8 @@ import yargs from 'yargs';
 import * as spinner from '../../shared/spinner';
 
 let anujsPath: string;
-const isInit: boolean = yargs.argv._[0] === 'init';
+const shouldWarn: boolean =
+  yargs.argv._[0] === 'build' || yargs.argv._[0] === 'start';
 
 export const getAnuPath = (): string => {
   if (anujsPath) {
@@ -17,7 +18,7 @@ export const getAnuPath = (): string => {
         basedir: process.cwd()
       }));
     } catch (error) {
-      if (!isInit) {
+      if (!shouldWarn) {
         spinner.warn(
           chalk`Cannot resolve {cyan anujs}
   if you are a app developer:

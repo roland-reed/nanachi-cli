@@ -12,7 +12,7 @@
     "dev:ts": "tsc -w",
     "dev:js": "rollup -c rollup.config.js -w",
     "build": "tsc && rollup -c rollup.config.js",
-    "prepublish": "npm run build"
+    "prepublishOnly": "tsc && rollup -c rollup.config.js --silent && npm unlink && npm link"
   },
   "repository": {
     "type": "git",
