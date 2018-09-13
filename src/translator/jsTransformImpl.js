@@ -5,9 +5,22 @@ const helpers = require('./helpers');
 const queue = require('./queue');
 const utils = require('./utils');
 const deps = require('./deps');
-//const prettifyXml = require('prettify-xml');
 const template = require('babel-template');
-
+const inlineElement = {
+    text: 1,
+    span: 1,
+    b: 1,
+    strong: 1,
+    s: 1,
+    em: 1,
+    bdo: 1,
+    q: 1
+};
+function addCreatePage(name, path, modules){
+    if (name == modules.className){
+        path.insertBefore(modules.createPage);
+    }
+}
 /**
  * JS文件转译器
  */
@@ -52,7 +65,9 @@ module.exports = {
                     modules.className,
                     modules
                 );
-                astPath.node.body.body.unshift(template( helpers.functionNameAliasConfig.h.init )());
+                astPath.node.body.body.unshift(
+                    template(helpers.functionNameAliasConfig.h.init)()
+                );
             }
         }
     },
@@ -71,15 +86,17 @@ module.exports = {
                 helpers.render.exit(astPath, '无状态组件', name, modules);
             }
 
-            if ( astPath.parentPath.type === 'ExportDefaultDeclaration'
-                && modules.componentType === 'Component'
-            ){
-                astPath.node.body.body.unshift(template(helpers.functionNameAliasConfig.h.init )());
+            if (
+                astPath.parentPath.type === 'ExportDefaultDeclaration' &&
+                modules.componentType === 'Component'
+            ) {
+                astPath.node.body.body.unshift(
+                    template(helpers.functionNameAliasConfig.h.init)()
+                );
             }
 
-
             //需要引入weapp-async-await
-            if (name === '_asyncToGenerator'){
+            if (name === '_asyncToGenerator') {
                 astPath.insertBefore(
                     template(
                         `var weAsync = require('weapp-async-await');
@@ -99,12 +116,10 @@ module.exports = {
         if (modules.componentType === 'App') {
             if (/\/pages\//.test(source)) {
                 modules['appRoute'] = modules['appRoute'] || [];
-                modules['appRoute'].push( source.replace(/^\.\//, ''));
+                modules['appRoute'].push(source.replace(/^\.\//, ''));
                 astPath.remove(); //移除分析依赖用的引用
             }
         }
-
-
 
         if (/\.(less|scss)$/.test(path.extname(source))) {
             astPath.remove();
@@ -116,14 +131,21 @@ module.exports = {
 
             //process alias for package.json alias field;
             helpers.resolveAlias(astPath, modules, item.local.name);
-
         });
-        // helpers.copyNpmModules(modules.current, source, node);
+        helpers.copyNpmModules(modules.current, source, node);
+    },
+    ExportDefaultDeclaration: {
+        exit(astPath, state) {
+            var modules = utils.getAnu(state);
+            if (modules.componentType == 'Page') {
+                let declaration = astPath.node.declaration;
+                //延后createPage语句在其同名的export语句前
+                addCreatePage(declaration.name, astPath, modules);
+            }
+        }
     },
 
     ExportNamedDeclaration: {
-        //小程序在定义
-        enter() {},
         exit(astPath) {
             let declaration = astPath.node.declaration;
             if (!declaration) {
@@ -184,10 +206,7 @@ module.exports = {
                     type: 'json',
                     sourcePath: modules.sourcePath,
                     path: modules.sourcePath
-                        .replace(
-                            /\/src\//,
-                            '/dist/'
-                        )
+                        .replace(/\/src\//, '/dist/')
                         .replace(/\.js$/, '.json'),
                     code: jsonStr
                 });
@@ -225,42 +244,69 @@ module.exports = {
             left.object.name === modules.className &&
             left.property.name === 'defaultProps'
         ) {
-            helpers.defaultProps(astPath.node.right.properties, modules);
+            //helpers.defaultProps(astPath.node.right.properties, modules);
             astPath.remove();
         }
     },
-    CallExpression(astPath, state) {
-        let node = astPath.node;
-        let args = node.arguments;
-        let callee = node.callee;
-        let modules = utils.getAnu(state);
-        //移除super()语句
-        if (modules.walkingMethod == 'constructor') {
-            if (callee.type === 'Super') {
-                astPath.remove();
-                return;
+    CallExpression: {
+        enter(astPath, state) {
+            let node = astPath.node;
+            let args = node.arguments;
+            let callee = node.callee;
+            let modules = utils.getAnu(state);
+            //移除super()语句
+            if (modules.walkingMethod == 'constructor') {
+                if (callee.type === 'Super') {
+                    astPath.remove();
+                    return;
+                }
             }
-        }
-        if (
-            (t.isJSXExpressionContainer(astPath.parentPath) ||
-                t.isConditionalExpression(astPath.parentPath)) &&
-            callee.type == 'MemberExpression' &&
-            callee.property.name === 'map' 
-           
-        ) {
-            if ( !args[1] &&
-                args[0].type === 'FunctionExpression'){
-                args[1] = t.identifier('this');
+            //处理循环语
+            if (
+                (t.isJSXExpressionContainer(astPath.parentPath) ||
+                    t.isConditionalExpression(astPath.parentPath)) &&
+                callee.type == 'MemberExpression' &&
+                callee.property.name === 'map'
+            ) {
+                //添加上第二参数
+                if (!args[1] && args[0].type === 'FunctionExpression') {
+                    args[1] = t.identifier('this');
+                }
+                //为callback添加参数
+                let params = args[0].params;
+                if (!params[0]) {
+                    params[0] = t.identifier('j' + astPath.node.start);
+                }
+                if (!params[1]) {
+                    params[1] = t.identifier('i' + astPath.node.start);
+                }
+                var indexName = args[0].params[1].name;
+                if (modules.indexArr) {
+                    modules.indexArr.push(indexName);
+                } else {
+                    modules.indexArr = [indexName];
+                }
+                modules.indexName = indexName;
             }
-            if (!args[0].params[1]){
-                args[0].params[1] = t.identifier('i'+astPath.node.start);
-            }
-            modules.indexName = args[0].params[1].name;
-        }
 
-        // if (callee.name === 'require'){
-        //     helpers.copyNpmModules(modules.current, node.arguments[0].value, node);
-        // }
+            if (callee.name === 'require') {
+                helpers.copyNpmModules(
+                    modules.current,
+                    node.arguments[0].value,
+                    node
+                );
+            }
+        },
+        exit(astPath, state) {
+            let modules = utils.getAnu(state);
+            if (modules.indexName) {
+                modules.indexName = null;
+                modules.indexArr.pop();
+                if (!modules.indexArr.length) {
+                    delete modules.indexArr;
+                }
+            }
+        }
     },
 
     //＝＝＝＝＝＝＝＝＝＝＝＝＝＝处理JSX＝＝＝＝＝＝＝＝＝＝＝＝＝＝
@@ -269,9 +315,11 @@ module.exports = {
             let modules = utils.getAnu(state);
             let nodeName = astPath.node.name.name;
             if (modules.importComponents[nodeName]) {
-                let dep = deps[nodeName] || (deps[nodeName] = {
-                    set: new Set()
-                });
+                let dep =
+                    deps[nodeName] ||
+                    (deps[nodeName] = {
+                        set: new Set()
+                    });
                 modules.usedComponents[nodeName] = true;
                 astPath.node.name.name = 'React.template';
                 let children = astPath.parentPath.node.children;
@@ -291,18 +339,18 @@ module.exports = {
                 attributes.push(
                     utils.createAttribute(
                         'templatedata',
-                        'data' + utils.createUUID()
+                        'data' + utils.createUUID(astPath)
                     ),
                     t.JSXAttribute(
                         t.JSXIdentifier('is'),
                         t.jSXExpressionContainer(t.identifier(nodeName))
                     )
                 );
-                if (!isEmpty) { //创建
+                if (!isEmpty) {
+                    //处理slot
                     var fragmentUid =
-                        'f' + astPath.node.start + astPath.node.end;
-                    
-                    if (dep.addImportTag){
+                        'f' + utils.createUUID(astPath);
+                    if (dep.addImportTag) {
                         dep.addImportTag(fragmentUid);
                     } else {
                         dep.set.add(fragmentUid);
@@ -315,10 +363,7 @@ module.exports = {
                                 t.identifier('this.props.instanceUid')
                             )
                         ),
-                        utils.createAttribute(
-                            'fragmentUid',
-                            fragmentUid
-                        )
+                        utils.createAttribute('fragmentUid', fragmentUid)
                     );
                 }
             } else {
@@ -337,40 +382,38 @@ module.exports = {
             var n = attrName.charAt(0) == 'o' ? 2 : 5;
             var eventName = attrName.slice(n).toLowerCase();
             if (eventName == 'click') {
-                astPath.node.name.name = n == 2 ? 'onTap': 'catchTap';
+                //onClick映射为onTap, catchClick映射为catchTap
+                astPath.node.name.name = n == 2 ? 'onTap' : 'catchTap';
                 eventName = 'tap';
             }
+            //事件存在的标签，必须添加上data-eventName-uid, data-class-uid, data-instance-uid
             var name = `data-${eventName}-uid`;
             attrs.push(
                 utils.createAttribute(
                     name,
-                    'e' + astPath.node.start + astPath.node.end
+                    'e' + utils.createUUID(astPath)
                 )
             );
             if (!attrs.setClassCode) {
                 attrs.setClassCode = true;
-                var keyValue;
-                for (var i = 0, el; (el = attrs[i++]); ) {
-                    if (el.name.name == 'key') {
-                        if (t.isLiteral(el.value)) {
-                            keyValue = el.value;
-                        } else if (t.isJSXExpressionContainer(el.value)) {
-                            keyValue = el.value;
-                        }
-                    }
-                }
                 attrs.push(
                     utils.createAttribute('data-class-uid', modules.classUid),
-                    t.JSXAttribute(
-                        t.JSXIdentifier('data-instance-uid'),
+                    utils.createAttribute(
+                        'data-instance-uid',
                         t.jSXExpressionContainer(
                             t.identifier('this.props.instanceUid')
                         )
                     )
                 );
-                if (keyValue != undefined) {
+                //如果是位于循环里，还必须加上data-key，防止事件回调乱窜
+                if (modules.indexArr) {
                     attrs.push(
-                        t.JSXAttribute(t.JSXIdentifier('data-key'), keyValue)
+                        utils.createAttribute(
+                            'data-key',
+                            t.jSXExpressionContainer(
+                                t.identifier(modules.indexArr.join('+\'-\'+'))
+                            )
+                        )
                     );
                 }
             }
@@ -378,32 +421,23 @@ module.exports = {
             attrName === 'style' &&
             t.isJSXExpressionContainer(attrValue)
         ) {
+            //将动态样式封装到React.collectStyle中
             var expr = attrValue.expression;
             var styleType = expr.type;
-            var styleRandName = `"style${(astPath.node.start+astPath.node.end)}"` +(modules.indexName ? ' +'+ modules.indexName:'');
-            if (styleType === 'Identifier') {
-                // 处理形如 <div style={formItemStyle}></div> 的style结构
-                var styleName = expr.name;
+            var isIdentifier = styleType === 'Identifier';
+            if (isIdentifier || styleType === 'ObjectExpression') {
+                var styleRandName =
+                    `"style${utils.createUUID(astPath)}"` +
+                    (modules.indexName ? ' +' + modules.indexName : '');
+                //Identifier 处理形如 <div style={formItemStyle}></div> 的style结构
+                //ObjectExpression 处理形如 style={{ width: 200, borderWidth: '1px' }} 的style结构
+                var styleName = isIdentifier ? expr.name : generate(expr).code;
                 attrs.push(
-                    t.JSXAttribute(
-                        t.JSXIdentifier('style'),
+                    utils.createAttribute(
+                        'style',
                         t.jSXExpressionContainer(
                             t.identifier(
                                 `React.collectStyle(${styleName}, this.props, ${styleRandName})`
-                            )
-                        )
-                    )
-                );
-                astPath.remove();
-            } else if (styleType === 'ObjectExpression') {
-                // 处理形如 style={{ width: 200, borderWidth: '1px' }} 的style结构
-                var styleValue = generate(expr).code;
-                attrs.push(
-                    t.JSXAttribute(
-                        t.JSXIdentifier('style'),
-                        t.jSXExpressionContainer(
-                            t.identifier(
-                                `React.collectStyle(${styleValue}, this.props, ${styleRandName})`
                             )
                         )
                     )
@@ -413,9 +447,19 @@ module.exports = {
         }
     },
 
+    JSXText(astPath) {
+        //去掉内联元素内部的所有换行符
+        if (astPath.parentPath.node.type == 'JSXElement') {
+            var open = astPath.parentPath.node.openingElement;
+            if (inlineElement[open.name.name]) {
+                astPath.node.value = astPath.node.value.replace(/\r?\n/g, '');
+            }
+        }
+    },
     JSXClosingElement: function(astPath, state) {
         let modules = utils.getAnu(state);
         let nodeName = astPath.node.name.name;
+        //将组件标签转换成React.template标签，html标签转换成view/text标签
         if (
             !modules.importComponents[nodeName] &&
             nodeName !== 'React.template'

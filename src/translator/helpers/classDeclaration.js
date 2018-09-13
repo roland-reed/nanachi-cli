@@ -9,7 +9,7 @@ module.exports = {
         var modules = utils.getAnu(state);
         modules.className = astPath.node.id.name;
         modules.parentName = generate(astPath.node.superClass).code || 'Object';
-        modules.classUid = 'c' + astPath.node.start + astPath.node.end;
+        modules.classUid = 'c' + utils.createUUID(astPath);
     },
     exit(astPath, state) {
         // 将类表式变成函数调用

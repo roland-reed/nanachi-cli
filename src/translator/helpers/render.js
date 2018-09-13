@@ -18,10 +18,15 @@ const functionAliasConfig = require('./functionNameAliasConfig');
 const deps = require('../deps');
 exports.exit = function(astPath, type, componentName, modules) {
     const body = astPath.node.body.body;
+    let expr;
 
     if (!body.length) return;
-
-    const expr = body[0];
+    for (let i  = 0, n = body.length; i < n; i++){
+        expr = body[i];
+        if (t.isReturnStatement(expr)){
+            break;
+        }
+    }
 
     switch (true) {
         case t.isReturnStatement(expr):
