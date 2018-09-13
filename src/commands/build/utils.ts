@@ -9,7 +9,7 @@ const rollupPluginNodeResolve = require('rollup-plugin-node-resolve');
 const rollupPluginCommonjs = require('rollup-plugin-commonjs');
 
 let anujsPath: string;
-const isBuilding: boolean = yargs.argv[0] === 'build';
+const isInit: boolean = yargs.argv[0] === 'init';
 
 export const getAnuPath = (): string => {
   if (anujsPath) {
@@ -20,7 +20,7 @@ export const getAnuPath = (): string => {
         basedir: process.cwd()
       }));
     } catch (error) {
-      if (isBuilding) {
+      if (!isInit) {
         spinner.warn(
           chalk`Cannot resolve {cyan anujs}, ` +
             chalk`if you haven't install {cyan anujs}, execute {cyan npm install anujs}, ` +

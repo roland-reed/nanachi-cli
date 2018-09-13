@@ -7,6 +7,7 @@ async function start() {
     });
     await build.start();
   } catch (error) {
+    throw error;
     // tslint:disable
     console.log(error);
   }
