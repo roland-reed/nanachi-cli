@@ -96,16 +96,16 @@ module.exports = {
             }
 
             //需要引入weapp-async-await
-            if (name === '_asyncToGenerator') {
-                astPath.insertBefore(
-                    template(
-                        `var weAsync = require('weapp-async-await');
-                         var Promise = weAsync.Promise;
-                         var regeneratorRuntime = weAsync.regeneratorRuntime;
-                        `
-                    )()
-                );
-            }
+            // if (name === '_asyncToGenerator') {
+            //     astPath.insertBefore(
+            //         template(
+            //             `var weAsync = require('weapp-async-await');
+            //              var Promise = weAsync.Promise;
+            //              var regeneratorRuntime = weAsync.regeneratorRuntime;
+            //             `
+            //         )()
+            //     );
+            // }
         }
     },
     ImportDeclaration(astPath, state) {

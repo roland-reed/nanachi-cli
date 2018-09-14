@@ -1,16 +1,16 @@
+import generate from 'babel-generator';
+import traverse from 'babel-traverse';
+import t from 'babel-types';
+import babylon from 'babylon';
+import chalk from 'chalk';
 const { transform } = require('../src/translator/jsTransform');
 const { wxml } = require('../src/translator/bridge');
 import * as path from 'path';
-import chalk from 'chalk';
-import t from 'babel-types';
-import traverse from 'babel-traverse';
 import * as spinner from '../../shared/spinner';
 import Entry from './Entry';
 import { IEntryOptions } from './Entry';
-import babylon from 'babylon';
-import generate from 'babel-generator';
-import { formatSize } from './utils';
 import { getAlias } from './requireAlias';
+import { formatSize } from './utils';
 
 export default class JSEntry extends Entry {
   public type: symbol;
@@ -142,6 +142,9 @@ export default class JSEntry extends Entry {
             path.parse(destinationPath).dir,
             absolutePathOfDist
           );
+          if (!relativePath && !relativePath.startsWith('./')) {
+            relativePath = './' + relativePath;
+          }
         }
         astPath.node.source.value = relativePath;
       },

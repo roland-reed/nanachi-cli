@@ -18,7 +18,7 @@ export const getAnuPath = (): string => {
         basedir: process.cwd()
       }));
     } catch (error) {
-      if (!shouldWarn) {
+      if (shouldWarn) {
         spinner.warn(
           chalk`Cannot resolve {cyan anujs}
   if you are a app developer:

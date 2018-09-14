@@ -22,7 +22,8 @@ export default {
     'chokidar',
     'yargs',
     'less',
-    'node-sass'
+    'node-sass',
+    'babel-core'
   ],
   plugins: [
     rollupPluginBabel({
