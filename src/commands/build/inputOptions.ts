@@ -35,7 +35,9 @@ export default {
       '@components': path.resolve(process.cwd(), './src/components'),
       '@react': getAnuPath()
     }),
-    less(),
+    less({
+      output: () => ''
+    }),
     sass(),
     rollupPluginNodeResolve(),
     rollupPluginCommonjs({})

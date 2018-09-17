@@ -1,9 +1,8 @@
 import babelCore from 'babel-core';
-import * as t from 'babel-types';
 import fs from 'fs-extra';
 import path from 'path';
+import modulePlugin from '../../shared/modulePlugin';
 import File from './File';
-import { getAlias } from './requireAlias';
 
 export interface IModule {
   sourcePath: string;
@@ -80,149 +79,9 @@ export default class Module extends File {
     );
   }
   private async build() {
-    // const bundle = await rollup.rollup({
-    //   input: this.sourcePath,
-    //   external: id => true,
-    //   plugins: [
-    //     rollupPluginBabel({
-    //       plugins: [
-    //         require('@babel/plugin-proposal-class-properties'),
-    //         () => {
-    //           return {
-    //             visitor: {
-    //               CallExpression: (astPath: any) => {
-    //                 if (astPath.node.callee.name === 'require') {
-    //                   const id = astPath.node.arguments[0].value;
-    //                   if (!id.startsWith('./')) {
-    //                     const realPath = getAlias(id, this.cwd);
-    //                     const relativePathFromNodeModules = path.relative(
-    //                       path.resolve(this.cwd, 'node_modules'),
-    //                       path.resolve(realPath)
-    //                     );
-    //                     const distPath = path.relative(
-    //                       this.getDestinationPath(),
-    //                       path.resolve(
-    //                         this.getDestinationDir(),
-    //                         relativePathFromNodeModules
-    //                       )
-    //                     );
-    //                     astPath.node.arguments[0].value = distPath;
-    //                   }
-    //                 }
-    //               },
-    //               MemberExpression: (astPath: any) => {
-    //                 if (
-    //                   t.isMemberExpression(astPath.node) &&
-    //                   astPath.node.property.name === 'NODE_ENV'
-    //                 ) {
-    //                   if (
-    //                     t.isMemberExpression(astPath.node.object) &&
-    //                     astPath.node.object.property.name === 'env'
-    //                   ) {
-    //                     if (
-    //                       t.isIdentifier(astPath.node.object.object) &&
-    //                       astPath.node.object.object.name === 'process'
-    //                     ) {
-    //                       astPath.replaceWith(t.stringLiteral('production'));
-    //                     }
-    //                   }
-    //                 }
-    //               }
-    //             }
-    //           };
-    //         }
-    //       ],
-    //       presets: [
-    //         [
-    //           require('@babel/preset-env'),
-    //           {
-    //             targets: {
-    //               node: 6
-    //             }
-    //           }
-    //         ]
-    //       ]
-    //     }),
-    //     rollupPluginNodeResolve(),
-    //     rollupPluginCommonJS(),
-    //     alias({
-    //       react: getAnuPath()
-    //     })
-    //   ]
-    // });
-
-    // const { code } = await bundle.generate({
-    //   format: 'cjs',
-    //   exports: 'named'
-    // });
-
     this.code = babelCore.transform(this.code, {
       babelrc: false,
-      plugins: [
-        // require('@babel/plugin-proposal-class-properties'),
-        () => {
-          return {
-            visitor: {
-              CallExpression: (astPath: any) => {
-                if (astPath.node.callee.name === 'require') {
-                  const id = astPath.node.arguments[0].value;
-                  if (!id.startsWith('./')) {
-                    const realPath = getAlias(id, this.cwd);
-                    const relativePathFromNodeModules = path.relative(
-                      path.resolve(this.cwd, 'node_modules'),
-                      path.resolve(realPath)
-                    );
-                    const distPath = path.relative(
-                      this.getDestinationPath(),
-                      path.resolve(
-                        this.getDestinationDir(),
-                        relativePathFromNodeModules
-                      )
-                    );
-                    astPath.node.arguments[0].value = distPath;
-                  }
-                }
-              },
-              ImportDeclaration: (astPath: any) => {
-                const id = astPath.node.source.value;
-                if (!id.startsWith('./')) {
-                  const realPath = getAlias(id, path.parse(this.getSourcePath()).dir);
-                  const relativePathFromNodeModules = path.relative(
-                    path.resolve(this.cwd, 'node_modules'),
-                    path.resolve(realPath)
-                  );
-                  const distPath = path.relative(
-                    path.parse(this.getDestinationPath()).dir,
-                    path.resolve(
-                      this.getDestinationDir(),
-                      relativePathFromNodeModules
-                    )
-                  );
-                  astPath.node.source.value = distPath;
-                }
-              },
-              MemberExpression: (astPath: any) => {
-                if (
-                  t.isMemberExpression(astPath.node) &&
-                  astPath.node.property.name === 'NODE_ENV'
-                ) {
-                  if (
-                    t.isMemberExpression(astPath.node.object) &&
-                    astPath.node.object.property.name === 'env'
-                  ) {
-                    if (
-                      t.isIdentifier(astPath.node.object.object) &&
-                      astPath.node.object.object.name === 'process'
-                    ) {
-                      astPath.replaceWith(t.stringLiteral('production'));
-                    }
-                  }
-                }
-              }
-            }
-          };
-        }
-      ]
+      plugins: [require('babel-plugin-transform-commonjs-es2015-modules'), modulePlugin]
     }).code;
   }
 }

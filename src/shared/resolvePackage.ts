@@ -6,7 +6,7 @@ const alias: {
   [property: string]: string;
 } = {};
 
-export const getAlias = (name: string, basedir: string) => {
+export const resolvePackage = (name: string, basedir: string) => {
   if (name.startsWith('@components')) {
     return path.resolve(
       process.cwd(),
@@ -29,6 +29,10 @@ export const getAlias = (name: string, basedir: string) => {
     );
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     if (packageJson.module) {
+      // 针对 react-redux 以及 redux 的 hack
+      // 由于 rollup 默认使用的是 react-redux 导出的 esm 模块而非 cjs 模块
+      // 而 resolve 是 cjs 的实现，会导致复制到 dist 目录中的文件路径出错
+      // 因此将路径中的 lib 替换为 es
       alias[name] = resolved
         .split('/')
         .map(v => (v === 'lib' ? 'es' : v))

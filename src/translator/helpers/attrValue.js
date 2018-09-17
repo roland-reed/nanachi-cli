@@ -56,43 +56,29 @@ module.exports = function(astPath) {
                 replaceWithExpr(astPath, attrValue.replace(/^\s*this\./, ''));
             }
             break;
-        case 'CallExpression':
-            if (isEvent) {
-                var match = attrValue.match(/this\.(\w+)\.bind/);
-                if (match && match[1]) {
-                    bindEvent(astPath, attrName, match[1]);
-                } else {
-                    throwEventValue(attrName, attrValue);
-                }
-            } else {
-                if (
-                    attrName === 'style' &&
-                    attrValue.indexOf('React.collectStyle') === 0
-                ) {
-                    // style={{}} 类型解析
-                    let name = attrValue;
-                    let styleID = name.match(/style\d+/)[0];
-                    if (name.lastIndexOf('+') !== -1) {
-                        var indexName = name
-                            .split('+')
-                            .pop()
-                            .match(/\w+/)[0];
-
-                        replaceWithExpr(
-                            astPath,
-                            `props['${styleID}' + ${indexName}] `
-                        );
-                    } else {
-                        replaceWithExpr(astPath, `props.${styleID}`);
-                    }
-                } else {
-                    replaceWithExpr(astPath, attrValue);
-                }
-            }
-            break;
+            case 'CallExpression':
+			if (isEvent) {
+				var match = attrValue.match(/this\.(\w+)\.bind/);
+				if (match && match[1]) {
+					bindEvent(astPath, attrName, match[1]);
+				} else {
+					throwEventValue(attrName, attrValue);
+				}
+			} else {
+				if (attrName === 'style' && attrValue.indexOf('React.toStyle') === 0) {
+					// style={{}} 类型解析
+					let start = attrValue.indexOf("'style");
+					let end = attrValue.lastIndexOf(')');
+					let styleID = attrValue.slice(start, end);
+					replaceWithExpr(astPath, `props[${styleID}] `);
+				} else {
+					replaceWithExpr(astPath, attrValue);
+				}
+			}
+			break;
         case 'ObjectExpression':
             if (attrName === 'style') {
-                var styleValue = styleHelper(expr);
+                let styleValue = styleHelper(expr);
                 replaceWithExpr(astPath, styleValue, true);
             } else if (isEvent) {
                 throwEventValue(attrName, attrValue);

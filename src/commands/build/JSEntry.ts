@@ -6,10 +6,10 @@ import chalk from 'chalk';
 const { transform } = require('../src/translator/jsTransform');
 const { wxml } = require('../src/translator/bridge');
 import * as path from 'path';
+import { resolvePackage } from '../../shared/resolvePackage';
 import * as spinner from '../../shared/spinner';
 import Entry from './Entry';
 import { IEntryOptions } from './Entry';
-import { getAlias } from './requireAlias';
 import { formatSize } from './utils';
 
 export default class JSEntry extends Entry {
@@ -126,7 +126,7 @@ export default class JSEntry extends Entry {
         if (!relativePath) {
           const relativePathToNodeModules = path.relative(
             path.resolve(this.getCwd(), 'node_modules'),
-            getAlias(id, this.getSourceDir())
+            resolvePackage(id, this.getSourceDir())
           );
           const absolutePathOfDist = path.resolve(
             this.getCwd(),
