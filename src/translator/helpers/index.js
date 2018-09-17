@@ -9,8 +9,8 @@ module.exports = {
     classDeclaration: require('./classDeclaration'),
     exportExpr: require('./exportExpr'),
     wxml: require('./wxml'),
-    copyNpmModules: require('./copyModules'),
+    // copyNpmModules: require('./copyModules'),
     moduleToCjs: require('./moduleToCjs'),
-    resolveAlias: require('./resolveAlias'),
+    // resolveAlias: require('./resolveAlias'),
     functionNameAliasConfig: require('./functionNameAliasConfig')
 };

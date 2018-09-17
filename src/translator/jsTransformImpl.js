@@ -131,9 +131,9 @@ module.exports = {
             modules.importComponents[item.local.name] = source;
 
             //process alias for package.json alias field;
-            helpers.resolveAlias(astPath, modules, item.local.name);
+            // helpers.resolveAlias(astPath, modules, item.local.name);
         });
-        helpers.copyNpmModules(modules.current, source, node);
+        // helpers.copyNpmModules(modules.current, source, node);
     },
     ExportDefaultDeclaration: {
         exit(astPath, state) {
@@ -312,13 +312,13 @@ module.exports = {
             }
            
             //如果是页面是var a = require("react")
-            if (callee.name === 'require') {
-                helpers.copyNpmModules(
-                    modules.current,
-                    node.arguments[0].value,
-                    node
-                );
-            }
+            // if (callee.name === 'require') {
+            //     helpers.copyNpmModules(
+            //         modules.current,
+            //         node.arguments[0].value,
+            //         node
+            //     );
+            // }
         },
         exit(astPath, state) {
             let modules = utils.getAnu(state);

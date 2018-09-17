@@ -36,7 +36,7 @@ exports.exit = function(astPath, type, componentName, modules) {
                 babelrc: false,
                 plugins: [
                     [
-                        'transform-react-jsx',
+                        require('babel-plugin-transform-react-jsx'),
                         { pragma: functionAliasConfig.h.variableDeclarator }
                     ]
                 ]

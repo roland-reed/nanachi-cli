@@ -1,10 +1,13 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import resolve from 'resolve';
+import { getAnuPath } from '../commands/build/utils';
 
 const alias: {
   [property: string]: string;
-} = {};
+} = {
+  react: getAnuPath()
+};
 
 export const resolvePackage = (name: string, basedir: string) => {
   if (name.startsWith('@components')) {

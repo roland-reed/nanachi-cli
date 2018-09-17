@@ -37,10 +37,10 @@ function transform(code, opts) {
         ...opts,
         babelrc: false,
         plugins: [
-            'syntax-jsx',
-            'transform-decorators-legacy',
-            'transform-object-rest-spread',
-            'transform-async-to-generator',
+            require('babel-plugin-syntax-jsx'),
+            require('babel-plugin-transform-decorators-legacy').default,
+            require('babel-plugin-transform-object-rest-spread'),
+            require('babel-plugin-transform-async-to-generator'),
             // 'transform-es2015-modules-commonjs',
             miniappPlugin
         ]

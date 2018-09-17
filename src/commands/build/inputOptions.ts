@@ -33,7 +33,8 @@ export default {
     }),
     alias({
       '@components': path.resolve(process.cwd(), './src/components'),
-      '@react': getAnuPath()
+      '@react': getAnuPath(),
+      'react': getAnuPath()
     }),
     less({
       output: () => ''

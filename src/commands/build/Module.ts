@@ -1,8 +1,10 @@
 import babelCore from 'babel-core';
+import * as t from 'babel-types';
 import fs from 'fs-extra';
-import path from 'path';
-import modulePlugin from '../../shared/modulePlugin';
+import * as path from 'path';
+import { resolvePackage } from '../../shared/resolvePackage';
 import File from './File';
+import { getAnuPath } from './utils';
 
 export interface IModule {
   sourcePath: string;
@@ -55,12 +57,6 @@ export default class Module extends File {
   private async loadCode() {
     this.code = await fs.readFile(this.sourcePath, 'utf8');
   }
-  private getSourceDir() {
-    if (!this.sourceDir) {
-      this.sourceDir = path.parse(this.sourcePath).dir;
-    }
-    return this.sourceDir;
-  }
   private getDestinationDir() {
     if (!this.destinationDir) {
       this.destinationDir = path.parse(this.destinationPath).dir;
@@ -81,7 +77,73 @@ export default class Module extends File {
   private async build() {
     this.code = babelCore.transform(this.code, {
       babelrc: false,
-      plugins: [require('babel-plugin-transform-commonjs-es2015-modules'), modulePlugin]
+      plugins: [
+        () => {
+          return {
+            visitor: {
+              CallExpression: (astPath: any) => {
+                if (astPath.node.callee.name === 'require') {
+                  const id = astPath.node.arguments[0].value;
+                  if (!id.startsWith('./')) {
+                    const realPath = resolvePackage(id, this.cwd);
+                    const relativePathFromNodeModules = path.relative(
+                      path.resolve(this.cwd, 'node_modules'),
+                      path.resolve(realPath)
+                    );
+                    const distPath = path.relative(
+                      this.getDestinationPath(),
+                      path.resolve(
+                        this.getDestinationDir(),
+                        relativePathFromNodeModules
+                      )
+                    );
+                    astPath.node.arguments[0].value = distPath;
+                  }
+                }
+              },
+              ImportDeclaration: (astPath: any) => {
+                const id = astPath.node.source.value;
+                if (!id.startsWith('./')) {
+                  const realPath = resolvePackage(
+                    id,
+                    path.parse(this.getSourcePath()).dir
+                  );
+                  const relativePathFromNodeModules = path.relative(
+                    path.resolve(this.cwd, 'node_modules'),
+                    path.resolve(realPath)
+                  );
+                  const distPath = path.relative(
+                    path.parse(this.getDestinationPath()).dir,
+                    path.resolve(
+                      this.getDestinationDir(),
+                      relativePathFromNodeModules
+                    )
+                  );
+                  astPath.node.source.value = distPath;
+                }
+              },
+              MemberExpression: (astPath: any) => {
+                if (
+                  t.isMemberExpression(astPath.node) &&
+                  astPath.node.property.name === 'NODE_ENV'
+                ) {
+                  if (
+                    t.isMemberExpression(astPath.node.object) &&
+                    astPath.node.object.property.name === 'env'
+                  ) {
+                    if (
+                      t.isIdentifier(astPath.node.object.object) &&
+                      astPath.node.object.object.name === 'process'
+                    ) {
+                      astPath.replaceWith(t.stringLiteral('production'));
+                    }
+                  }
+                }
+              }
+            }
+          };
+        }
+      ]
     }).code;
   }
 }
