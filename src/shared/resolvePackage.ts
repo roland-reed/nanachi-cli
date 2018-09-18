@@ -20,29 +20,46 @@ export const resolvePackage = (name: string, basedir: string) => {
         .join('/')
     );
   }
+  // 缓存
   if (alias[name]) return alias[name];
+  // 尝试解析
   const resolved = resolve.sync(name, { basedir });
+  // cjs 解析结果
   alias[name] = resolved;
+
+  const packageJsonPath = path.resolve(
+    process.cwd(),
+    'node_modules',
+    name,
+    'package.json'
+  );
+  let packageJson: any = {};
+
   try {
-    const packageJsonPath = path.resolve(
-      process.cwd(),
-      'node_modules',
-      name,
-      'package.json'
-    );
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    if (packageJson.module) {
-      // 针对 react-redux 以及 redux 的 hack
-      // 由于 rollup 默认使用的是 react-redux 导出的 esm 模块而非 cjs 模块
-      // 而 resolve 是 cjs 的实现，会导致复制到 dist 目录中的文件路径出错
-      // 因此将路径中的 lib 替换为 es
-      alias[name] = resolved
-        .split('/')
-        .map(v => (v === 'lib' ? 'es' : v))
-        .join('/');
-    }
+    packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   } catch (error) {
-    // noop
+    // 解析失败的结构不会显示
+  }
+  // 如果该包存在 ESModule
+  if (packageJson.module) {
+    // 统一形式，./dist -> dist
+    const normalize = (n: string) => n.replace(/^\.?[/\\]?/, '');
+    const main = normalize(packageJson.main);
+    const module = normalize(packageJson.module);
+    // 将 cjs 的解析结果替换为 esm
+    // main = dist/cjs; esm = dist/esm;
+    // 比如 dist/cjs/index.js -> dist/esm/index.js
+    let regex = new RegExp(`${main}`);
+
+    // 若 module 是一个文件而 main 是一个目录
+    // 需要将路径中 main 之后的字符串都替换掉
+    // 如 main = dist/cjs; module = dist/esm/production.js; resolved = dist/cjs/index.js
+    // 需要将 dist/cjs/index.js 替换为 dist/esm/production.js
+    if (path.parse(module).ext) {
+      regex = new RegExp(`${main}.*`);
+    }
+
+    alias[name] = resolved.replace(regex, module);
   }
   return alias[name];
 };

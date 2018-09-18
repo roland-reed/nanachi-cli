@@ -1,3 +1,4 @@
+import axios from 'axios';
 import chalk from 'chalk';
 import chokidar from 'chokidar';
 import * as fs from 'fs-extra';
@@ -11,6 +12,7 @@ import JSEntry from './JSEntry';
 import Module from './Module';
 import StyleEntry from './StyleEntry';
 import { getAnuPath } from './utils';
+const alias = require('rollup-plugin-alias');
 export default class {
   private files: Map<string, Entry | JSEntry | Module>;
   private cwd: string;
@@ -39,6 +41,9 @@ export default class {
   }
   public async build() {
     this.beforeStart();
+    if (!getAnuPath()) {
+      await this.fetchLatestReactWX();
+    }
     await this.collectDependencies();
     await this.process();
     spinner.stop();
@@ -81,6 +86,29 @@ export default class {
     createEventHandler('change');
     createEventHandler('unlink');
     process.on('SIGINT', this.beforeExitLog);
+  }
+  private async fetchLatestReactWX() {
+    try {
+      spinner.start(chalk`fetching latest {cyan ReactWX.js} from GitHub`);
+      const lib = await axios.get(
+        'https://raw.githubusercontent.com/RubyLouvre/anu/master/dist/ReactWX.js'
+      );
+      const filePath = path.resolve(
+        this.cwd,
+        'node_modules/anujs/dist/ReactWX.js'
+      );
+      await fs.ensureFile(filePath);
+      await fs.writeFile(filePath, lib.data, {
+        encoding: 'utf8'
+      });
+      spinner.succeed(chalk`latest {cyan ReactWX.js} fetched from GitHub`);
+    } catch (error) {
+      throw error;
+      spinner.stop(
+        chalk`Cannot retrieve latest {cyan ReactWX.js} from GitHub, make sure you can access GitHub`
+      );
+      process.exit(0);
+    }
   }
   private async watchChange(changedPath: string) {
     const file = this.files.get(changedPath);
@@ -164,6 +192,15 @@ export default class {
   }
   private async collectDependencies() {
     spinner.start('collecting dependencies...');
+    // 如果本地没有 ReactWX.js 的话，alias 中的 @react 和 react 将会是空字符
+    // 因此在获取到 ReactWX.js 之后再解析
+    inputOptions.plugins.push(
+      alias({
+        '@components': path.resolve(process.cwd(), './src/components'),
+        '@react': getAnuPath(),
+        react: getAnuPath()
+      })
+    );
     const bundle = await rollup.rollup(inputOptions);
     const modules = bundle.modules.map(module => ({
       sourcePath: module.id,

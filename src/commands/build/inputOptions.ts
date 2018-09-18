@@ -1,5 +1,4 @@
 const rollupPluginBabel = require('rollup-plugin-babel');
-const alias = require('rollup-plugin-alias');
 const less = require('rollup-plugin-less');
 const sass = require('rollup-plugin-sass');
 import * as path from 'path';
@@ -30,11 +29,6 @@ export default {
           }
         ]
       ]
-    }),
-    alias({
-      '@components': path.resolve(process.cwd(), './src/components'),
-      '@react': getAnuPath(),
-      'react': getAnuPath()
     }),
     less({
       output: () => ''

@@ -4,7 +4,6 @@ import fs from 'fs-extra';
 import * as path from 'path';
 import { resolvePackage } from '../../shared/resolvePackage';
 import File from './File';
-import { getAnuPath } from './utils';
 
 export interface IModule {
   sourcePath: string;
@@ -17,7 +16,6 @@ export default class Module extends File {
   private cwd: string;
   private code: string;
   private destDir: string;
-  private sourceDir: string;
   private sourcePath: string;
   private destinationPath: string;
   private destinationDir: string;

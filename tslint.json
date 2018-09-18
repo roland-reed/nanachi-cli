@@ -7,6 +7,7 @@
     "trailing-comma": false,
     "curly": [true, "ignore-same-line"],
     "object-literal-sort-keys": false,
-    "arrow-parens": false
+    "arrow-parens": false,
+    "object-literal-key-quotes": false
   }
 }

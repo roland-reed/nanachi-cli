@@ -23,7 +23,8 @@ export default {
     'yargs',
     'less',
     'node-sass',
-    'babel-core'
+    'babel-core',
+    'axios'
   ],
   plugins: [
     rollupPluginBabel({

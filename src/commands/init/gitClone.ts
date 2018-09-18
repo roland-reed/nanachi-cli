@@ -20,10 +20,26 @@ function clone({
     const commands = ['git', 'clone', gitRepository];
     if (checkout) commands.push('-b', checkout);
     commands.push(target);
-    exec(commands.join(' '), (err, stdout, stderror) => {
+    exec(commands.join(' '), err => {
       if (err) reject(err);
       resolve();
     });
+  });
+}
+
+async function initGitRepository(target: string) {
+  return new Promise((resolve, reject) => {
+    const commands = ['git', 'init'];
+    exec(
+      commands.join(' '),
+      {
+        cwd: target
+      },
+      err => {
+        if (err) reject(err);
+        resolve();
+      }
+    );
   });
 }
 
@@ -36,11 +52,10 @@ async function init({
   const targetPath = path.resolve(process.cwd(), target);
 
   if (await fs.pathExists(targetPath)) {
-    /* tslint:disable */
-    console.log(
+    spinner.stop(
       chalk`{cyan ${targetPath}} is already existed, please try another name`
     );
-    /* tslint:enable */
+    process.exit(0);
   }
 
   try {
@@ -51,6 +66,7 @@ async function init({
       git
     });
     await fs.remove(path.resolve(targetPath, '.git'));
+    if (git) await initGitRepository(targetPath);
   } catch (error) {
     spinner.stop();
     /* tslint:disable */

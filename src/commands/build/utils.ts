@@ -1,13 +1,10 @@
+import axios from 'axios';
 import chalk from 'chalk';
 import less from 'less';
 import nodeSass from 'node-sass';
 import resolve from 'resolve';
-import yargs from 'yargs';
-import * as spinner from '../../shared/spinner';
 
 let anujsPath: string;
-const shouldWarn: boolean =
-  yargs.argv._[0] === 'build' || yargs.argv._[0] === 'start';
 
 export const getAnuPath = (): string => {
   if (anujsPath) {
@@ -18,21 +15,7 @@ export const getAnuPath = (): string => {
         basedir: process.cwd()
       }));
     } catch (error) {
-      if (shouldWarn) {
-        spinner.warn(
-          chalk`Cannot resolve {cyan anujs}
-  if you are a app developer:
-    a) execute {cyan npm install anujs}
-    b) or, execute {cyan npm install}
-  if you are a CLI developer:
-    a) cd [PATH_OF_ANUJS]
-    b) execute {cyan npm link} or {cyan yarn link}
-    c) cd [PATH_OF_YOUR_APP]
-    d) execute {cyan npm link anujs} or {cyan yarn link anujs}`
-        );
-        spinner.stop();
-        process.exit(1);
-      }
+      return '';
     }
   }
 };

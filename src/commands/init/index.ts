@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import * as path from 'path';
 import * as spinner from '../../shared/spinner';
+import changePackageName from './changePackageName';
 import gitClone from './gitClone';
 import install from './packageInstall';
 import { choices as RegistryChoices, defaultRegistry } from './Registry';
@@ -63,6 +64,8 @@ export default async function init() {
     });
 
     spinner.succeed('template cloned');
+
+    await changePackageName(process.cwd(), name);
 
     await install(registry, path.resolve(process.cwd(), name));
 

@@ -93,7 +93,7 @@ export default class JSEntry extends Entry {
 
     emittedFiles.copiedFiles.forEach(
       ({ path: filePath, size }: { path: string; size: number }) => {
-        logString += chalk`${indent}{cyan.bold Copy:} {underline ${filePath}} ${formatSize(
+        logString += chalk`${indent}{cyan.bold Static:} {underline ${filePath}} ${formatSize(
           size
         )}`;
         logString += '\n';
