@@ -95,18 +95,6 @@ module.exports = {
                     template(helpers.functionNameAliasConfig.h.init)()
                 );
             }
-
-            //需要引入weapp-async-await
-            // if (name === '_asyncToGenerator') {
-            //     astPath.insertBefore(
-            //         template(
-            //             `var weAsync = require('weapp-async-await');
-            //              var Promise = weAsync.Promise;
-            //              var regeneratorRuntime = weAsync.regeneratorRuntime;
-            //             `
-            //         )()
-            //     );
-            // }
         }
     },
     ImportDeclaration(astPath, state) {
@@ -310,15 +298,6 @@ module.exports = {
                 }
                 modules.indexName = indexName;
             }
-           
-            //如果是页面是var a = require("react")
-            // if (callee.name === 'require') {
-            //     helpers.copyNpmModules(
-            //         modules.current,
-            //         node.arguments[0].value,
-            //         node
-            //     );
-            // }
         },
         exit(astPath, state) {
             let modules = utils.getAnu(state);

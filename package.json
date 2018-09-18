@@ -1,6 +1,6 @@
 {
   "name": "nanachi-cli",
-  "version": "0.0.2-beta.4",
+  "version": "0.0.2-beta.5",
   "description": "CLI for nanchi",
   "main": "lib/index.js",
   "bin": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/roland-reed/anu-cli.git"
+    "url": "git+https://github.com/roland-reed/nanachi-cli.git"
   },
   "keywords": [
     "anujs",
@@ -24,9 +24,9 @@
   "author": "roland-reed",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/roland-reed/anu-cli/issues"
+    "url": "https://github.com/roland-reed/nanachi-cli/issues"
   },
-  "homepage": "https://github.com/roland-reed/anu-cli#readme",
+  "homepage": "https://github.com/roland-reed/nanachi-cli#readme",
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/fs-extra": "^5.0.4",

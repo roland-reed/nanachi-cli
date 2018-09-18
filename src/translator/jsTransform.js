@@ -36,12 +36,10 @@ function transform(code, opts) {
     var result = babel.transform(code, Object.assign({}, opts, {
         babelrc: false,
         plugins: [
-            require('babel-plugin-transform-es2015-template-literals'),
             require('babel-plugin-syntax-jsx'),
             require('babel-plugin-transform-decorators-legacy').default,
             require('babel-plugin-transform-object-rest-spread'),
             require('babel-plugin-transform-async-to-generator'),
-            // 'transform-es2015-modules-commonjs',
             miniappPlugin
         ]
     }));
