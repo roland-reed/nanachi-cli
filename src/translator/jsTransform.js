@@ -33,8 +33,7 @@ function miniappPlugin() {
 }
 
 function transform(code, opts) {
-    var result = babel.transform(code, {
-        ...opts,
+    var result = babel.transform(code, Object.assign({}, opts, {
         babelrc: false,
         plugins: [
             require('babel-plugin-transform-es2015-template-literals'),
@@ -45,7 +44,7 @@ function transform(code, opts) {
             // 'transform-es2015-modules-commonjs',
             miniappPlugin
         ]
-    });
+    }));
     return result.code;
 
     // return helpers.moduleToCjs.byCode(result.code).code;
