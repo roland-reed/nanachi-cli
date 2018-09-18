@@ -1,13 +1,11 @@
 {
   "name": "nanachi-cli",
-  "version": "0.0.2-beta.3",
-  "description": "CLI for anujs",
+  "version": "0.0.2-beta.4",
+  "description": "CLI for nanchi",
   "main": "lib/index.js",
   "bin": {
     "nanachi": "bin/index.js"
   },
-  "js:next": "es/index.js",
-  "module": "es/index.js",
   "scripts": {
     "dev:ts": "tsc -w",
     "dev:js": "rollup -c rollup.config.js -w",
