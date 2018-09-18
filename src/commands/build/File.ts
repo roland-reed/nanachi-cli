@@ -9,14 +9,16 @@ export interface IFile {
 
 export default class File {
   public async write({ content, destinationPath, type, sourcePath }: IFile) {
-    await fs.ensureFile(destinationPath);
     switch (type) {
       case 'write':
+        await fs.ensureFile(destinationPath);
         await fs.writeFile(destinationPath, content);
         break;
 
       case 'copy':
-        await fs.copy(sourcePath, destinationPath);
+        if (!fs.pathExists(destinationPath)) {
+          await fs.copy(sourcePath, destinationPath);
+        }
         break;
 
       default:

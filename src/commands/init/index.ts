@@ -5,7 +5,7 @@ import changePackageName from './changePackageName';
 import gitClone from './gitClone';
 import install from './packageInstall';
 import { choices as RegistryChoices, defaultRegistry } from './Registry';
-import { choices as templateChoices, TEMPLATES } from './templates';
+import { getTemplatesData } from './templates';
 const inquirer = require('inquirer');
 const validateNpmPackageName = require('validate-npm-package-name');
 
@@ -17,6 +17,7 @@ export interface InterfaceAnswers {
 }
 
 export default async function init() {
+  const { templates, choices: templateChoices } = await getTemplatesData();
   try {
     const {
       name,
@@ -54,16 +55,18 @@ export default async function init() {
       }
     ]);
 
-    spinner.start(`cloning into ${name}`);
+    const gitRepository = templates[template].url;
+
+    spinner.start(chalk`cloning into {cyan ${name}} from {cyan ${gitRepository}}`);
 
     await gitClone({
-      checkout: TEMPLATES[template].checkout,
-      gitRepository: TEMPLATES[template].url,
+      checkout: templates[template].checkout,
+      gitRepository,
       target: name,
       git
     });
 
-    spinner.succeed('template cloned');
+    spinner.succeed('Template cloned');
 
     await changePackageName(process.cwd(), name);
 
@@ -78,7 +81,7 @@ export default async function init() {
       Start the project by executing the following commands:
 
       {cyan cd} ${name}
-      {cyan anu} start
+      {cyan nanachi} start
     `);
   } catch (error) {
     throw error;

@@ -37,6 +37,7 @@ function transform(code, opts) {
         ...opts,
         babelrc: false,
         plugins: [
+            require('babel-plugin-transform-es2015-template-literals'),
             require('babel-plugin-syntax-jsx'),
             require('babel-plugin-transform-decorators-legacy').default,
             require('babel-plugin-transform-object-rest-spread'),

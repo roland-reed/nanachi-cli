@@ -152,17 +152,18 @@ export default class JSEntry extends Entry {
         if (astPath.node.name.name === 'src') {
           if (t.isStringLiteral(astPath.node.value)) {
             const filePath = astPath.node.value.value;
-            if (!/^https?:\/\//.test(filePath)) {
+            if (/\.{0,2}\/.*/.test(filePath)) {
+              const destinationPath = path.resolve(
+                this.getDestinationDir(),
+                astPath.node.value.value
+              );
               this.appendExtraFile({
                 sourcePath: path.resolve(
                   this.getSourceDir(),
                   astPath.node.value.value
                 ),
                 type: 'copy',
-                destinationPath: path.resolve(
-                  this.getDestinationDir(),
-                  astPath.node.value.value
-                )
+                destinationPath
               });
             }
           }
@@ -180,7 +181,8 @@ export default class JSEntry extends Entry {
         }
         if (
           t.isIdentifier(astPath.node.key, {
-            name: 'config'
+            name: 'config',
+            static: true
           })
         ) {
           // tslint:disable-next-line

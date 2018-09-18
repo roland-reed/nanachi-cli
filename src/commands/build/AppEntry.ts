@@ -28,6 +28,7 @@ export default class AppEntry extends JSEntry {
     if (!page.startsWith('./')) return false;
     if (page.startsWith('@')) return false;
     if (path.parse(page).ext) return false;
+    if (!/\/pages\//.test(page)) return false;
     return true;
   }
   private async copyUserProjectConfig() {
@@ -38,8 +39,8 @@ export default class AppEntry extends JSEntry {
 
     if (await fs.pathExists(userProjectConfigPath)) {
       this.appendExtraFile({
-        sourcePath: path.resolve(this.getSourceDir(), 'project.config.json'),
-        type: 'copy',
+        content: await fs.readFile(userProjectConfigPath, 'utf8'),
+        type: 'write',
         destinationPath: path.resolve(
           this.getDestinationDir(),
           'project.config.json'

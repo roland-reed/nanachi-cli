@@ -1,3 +1,7 @@
+import axios from 'axios';
+import chalk from 'chalk';
+import * as spinner from '../../shared/spinner';
+
 interface InterfaceTEMPLATE {
   [property: string]: {
     url: string;
@@ -7,18 +11,65 @@ interface InterfaceTEMPLATE {
   };
 }
 
-export const TEMPLATES: InterfaceTEMPLATE = {
-  mall: {
-    value: 'mall',
-    name: 'mall demo',
-    checkout: 'gaoxiaolin',
-    url: 'git@gitlab.corp.qunar.com:qincheng.zhong/anuwx.git'
+const DEFAULT_TEMPLATES: InterfaceTEMPLATE = {
+  qunar: {
+    value: 'qunar',
+    name: '默认模板',
+    checkout: 'master',
+    url: 'https://github.com/YMFE/nanachi-template.git'
+  },
+  music: {
+    value: 'music',
+    name: '音乐 APP',
+    checkout: 'music',
+    url: 'https://github.com/YMFE/nanachi-template.git'
+  },
+  pdd: {
+    value: 'pdd',
+    name: '在线商城',
+    checkout: 'pdd',
+    url: 'https://github.com/YMFE/nanachi-template.git'
   }
 };
 
-export const choices = Object.keys(TEMPLATES).map(key => {
+const generateChoices = (templates: InterfaceTEMPLATE) =>
+  Object.keys(templates).map(key => {
+    return {
+      name: templates[key].name,
+      value: templates[key].value
+    };
+  });
+
+const getRemoteTemplates = async () => {
+  const remoteTemplatesUrl =
+    'https://raw.githubusercontent.com/YMFE/nanachi-template/master/templates.json';
+  const remoteTemplates = await axios.get(remoteTemplatesUrl);
+  return { ...DEFAULT_TEMPLATES, ...remoteTemplates.data };
+};
+
+const returnDefaultTemplates = () =>
+  new Promise(resolve => {
+    setTimeout(() => {
+      resolve(DEFAULT_TEMPLATES);
+    }, 3000);
+  });
+
+export async function getTemplatesData() {
+  spinner.start('fetching latest templates');
+
+  const templates = await Promise.race([
+    returnDefaultTemplates(),
+    getRemoteTemplates()
+  ]);
+
+  if (templates === DEFAULT_TEMPLATES) {
+    spinner.succeed(chalk`{bold Using offline templates}`);
+  } else {
+    spinner.succeed(chalk`{bold Using remote templates}`);
+  }
+
   return {
-    name: TEMPLATES[key].name,
-    value: TEMPLATES[key].value
+    templates,
+    choices: generateChoices(templates)
   };
-});
+}
