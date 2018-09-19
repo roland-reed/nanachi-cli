@@ -208,7 +208,7 @@ export default class JSEntry extends Entry {
     return path.join(root, dir, name + '.wxml');
   }
   private listenWxml() {
-    wxml.on('wxml', (code: string) => {
+    wxml.on('main', ({ content: code }: { content: string }) => {
       if (this.listen) {
         this.appendExtraFile({
           type: 'write',

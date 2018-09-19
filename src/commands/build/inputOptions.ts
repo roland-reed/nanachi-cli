@@ -1,10 +1,8 @@
 const rollupPluginBabel = require('rollup-plugin-babel');
 const less = require('rollup-plugin-less');
 const sass = require('rollup-plugin-sass');
-import * as path from 'path';
 const rollupPluginNodeResolve = require('rollup-plugin-node-resolve');
 const rollupPluginCommonjs = require('rollup-plugin-commonjs');
-import { getAnuPath } from './utils';
 
 export default {
   input: 'src/app.js',

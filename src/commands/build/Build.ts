@@ -13,6 +13,12 @@ import Module from './Module';
 import StyleEntry from './StyleEntry';
 import { getAnuPath } from './utils';
 const alias = require('rollup-plugin-alias');
+const { wxml } = require('../src/translator/bridge');
+
+interface InterfaceFragment {
+  id: string;
+  content: string;
+}
 export default class {
   private files: Map<string, Entry | JSEntry | Module>;
   private cwd: string;
@@ -21,6 +27,9 @@ export default class {
   private assetsDir: string;
   private watcher: chokidar.FSWatcher;
   private nodeModulesFiles: string[];
+  private fragments: {
+    [property: string]: string;
+  };
   constructor({
     cwd = process.cwd(),
     srcDir = 'src',
@@ -38,12 +47,14 @@ export default class {
     this.assetsDir = assetsDir;
     this.files = new Map();
     this.nodeModulesFiles = [];
+    this.fragments = {};
   }
   public async build() {
     this.beforeStart();
     if (!getAnuPath()) {
       await this.fetchLatestReactWX();
     }
+    this.listeningFragments();
     await this.collectDependencies();
     await this.process();
     spinner.stop();
@@ -64,6 +75,38 @@ export default class {
     spinner.succeed(
       chalk`Copied files from {cyan ${relativeSourceDir}} to {cyan ${relativeDestinationDir}}\n`
     );
+  }
+  private listeningFragments() {
+    wxml.on('fragment', (fragment: InterfaceFragment) => {
+      const { id, content } = fragment;
+      if (!this.fragments[id]) {
+        this.fragments[id] = content;
+      }
+    });
+  }
+  private async writeFragments() {
+    const destDir = path.join(
+      this.cwd,
+      this.destDir,
+      'components',
+      'Fragments'
+    );
+    await Object.keys(this.fragments).map(
+      id =>
+        new Promise(async (resolve, reject) => {
+          const filePath = destDir + '/' + id + '.wxml';
+          await fs.ensureFile(filePath);
+          await this.writeFile(filePath, this.fragments[id]);
+        })
+    );
+  }
+  private async writeFile(filePath: string, content: string) {
+    try {
+      await fs.writeFile(filePath, content);
+    } catch (error) {
+      // tslint:disable-next-line
+      console.log(error);
+    }
   }
   private watch() {
     this.watcher = chokidar.watch(path.resolve(this.cwd, this.srcDir));
@@ -244,5 +287,6 @@ export default class {
     const processes: Array<Promise<void>> = [];
     this.files.forEach(file => processes.push(file.process()));
     await Promise.all(processes);
+    await this.writeFragments();
   }
 }

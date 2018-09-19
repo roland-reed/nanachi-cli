@@ -492,7 +492,6 @@ module.exports = {
         },
         exit(astPath,state) {
             let attrName = astPath.node.name.name;
-            // let attrValue = astPath.node.value;
             if (attrName == 'render' && astPath.parentPath.renderProps) {
                 let attrValue = astPath.parentPath.renderProps;
                 let fragmentUid = astPath.parentPath.renderUid;
@@ -510,8 +509,6 @@ module.exports = {
                 } else {
                     dep.set.add(fragmentUid);
                 }
-                 
-                // console.log(subComponents, modules.usedComponents);
                 helpers.render.exit(
                     { 
                         node: attrValue.expression

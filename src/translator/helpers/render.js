@@ -77,8 +77,7 @@ exports.exit = function(astPath, type, componentName, modules) {
                     .replace(/\.js$/, '.wxml'),
                 code: prettifyXml(wxml, { indent: 2 })
             };
-            // console.log('xml generated')
-            bridge.wxml.emit('wxml', prettifyXml(wxml, { indent: 2 }));
+            
             //添加组件标签包含其他标签时（如<Dialog><p>xxx</p></Dialog>）产生的隐式依赖
             if (dep && !dep.addImportTag) {
                 dep.data = enqueueData; //表明它已经放入列队，不要重复添加
@@ -89,12 +88,8 @@ exports.exit = function(astPath, type, componentName, modules) {
                     dep.addImportTag(fragmentUid);
                 });
             }
-            queue.wxml.push(enqueueData);
-            // console.log(modules.sourcePath)
-            // process.emit('wxml', {
-            //     code:prettifyXml(wxml, { indent: 2 }),
-            //     sourcePath: modules.sourcePath
-            // })
+            bridge.wxml.emit('main', { content: enqueueData.code });
+            bridge.wxml.emit('fragment', { id: componentName, content: enqueueData.code });
             break;
         default:
             break;

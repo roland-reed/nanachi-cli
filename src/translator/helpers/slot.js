@@ -2,6 +2,7 @@ var path = require('path');
 const jsx = require('../utils');
 const generate = require('babel-generator').default;
 const prettifyXml = require('prettify-xml');
+const bridge = require('../bridge');
 const queue = require('../queue');
 /**
  * 用于生成组件标签的innerHTML中对应的Fragment
@@ -25,6 +26,10 @@ module.exports = function slotHelper(
     if (!modules.fragmentPath) {
         modules.fragmentPath = path.join(process.cwd(), 'dist', 'components', 'Fragments');
     }
+    bridge.wxml.emit('fragment', {
+        content: wxml,
+        id: fragmentUid
+    })
     queue.wxml.push({
         type: 'wxml',
         path: path.join(modules.fragmentPath,  fragmentUid + '.wxml'),
