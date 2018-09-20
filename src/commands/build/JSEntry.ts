@@ -142,9 +142,9 @@ export default class JSEntry extends Entry {
             path.parse(destinationPath).dir,
             absolutePathOfDist
           );
-          if (!relativePath && !relativePath.startsWith('./')) {
-            relativePath = './' + relativePath;
-          }
+        }
+        if (relativePath && !relativePath.startsWith('./')) {
+          relativePath = './' + relativePath;
         }
         astPath.node.source.value = relativePath;
       },
@@ -199,13 +199,25 @@ export default class JSEntry extends Entry {
             content: JSON.stringify(pageConfig)
           });
         }
-      }
+      },
+      // FunctionDeclaration: astPath => {
+      //   if (astPath.node.async) {
+      //     const program: any = astPath.findParent(t.isProgram);
+      //     const hasRegenerator: boolean = program.node.body.some(
+      //       (node: Node) => {
+      //         if (t.isImportDeclaration(node)) {
+      //           return
+      //         }
+      //       }
+      //     );
+      //   }
+      // }
     });
     this.setOriginalCode(generate(this.ast).code);
   }
   private getWxmlFilename(): string {
     const { root, dir, name } = path.parse(this.getDestinationPath());
-    return path.join(root, dir, name + '.wxml');
+    return path.join(root, dir, name + '.swan');
   }
   private listenWxml() {
     wxml.on('main', ({ content: code }: { content: string }) => {
