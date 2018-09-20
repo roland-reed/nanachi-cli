@@ -8,7 +8,7 @@ import File from './File';
 export interface IModule {
   sourcePath: string;
   destDir: string;
-  destinationDirName: string;
+  destinationDirName?: string;
   cwd: string;
 }
 
@@ -20,7 +20,7 @@ export default class Module extends File {
   private destinationPath: string;
   private destinationDir: string;
   private destinationDirName: string;
-  constructor({ sourcePath, destinationDirName, cwd, destDir }: IModule) {
+  constructor({ sourcePath, destinationDirName = 'npm', cwd, destDir }: IModule) {
     super();
     this.cwd = cwd;
     this.destDir = destDir;

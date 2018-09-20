@@ -10,6 +10,7 @@ import { resolvePackage } from '../../shared/resolvePackage';
 import * as spinner from '../../shared/spinner';
 import Entry from './Entry';
 import { IEntryOptions } from './Entry';
+import Module from './Module';
 import { formatSize } from './utils';
 
 export default class JSEntry extends Entry {
@@ -35,6 +36,7 @@ export default class JSEntry extends Entry {
   }
   public async process() {
     this.parse();
+    this.addRegeneratorRuntime();
     this.replaceImport();
     this.transform();
     this.logFiles();
@@ -104,13 +106,51 @@ export default class JSEntry extends Entry {
     // tslint:disable-next-line
     console.log(logString);
   }
+  private addRegeneratorRuntime() {
+    traverse(this.ast, {
+      ClassMethod: astPath => {
+        if (astPath.node.async) {
+          const program: any = astPath.findParent(t.isProgram);
+          const hasRegenerator: boolean = program.node.body.some(
+            (node: Node) => {
+              if (t.isImportDeclaration(node)) {
+                return node.specifiers.some(specifier =>
+                  t.isIdentifier(specifier.local, {
+                    name: 'regeneratorRuntime'
+                  })
+                );
+              }
+            }
+          );
+
+          if (!hasRegenerator) {
+            program.node.body.unshift(
+              t.importDeclaration(
+                [t.importDefaultSpecifier(t.identifier('regeneratorRuntime'))],
+                t.stringLiteral('regenerator-runtime/runtime')
+              )
+            );
+            const modulePath = resolvePackage(
+              'regenerator-runtime/runtime',
+              this.getDestinationDir()
+            );
+            const module = new Module({
+              sourcePath: modulePath,
+              cwd: this.getCwd(),
+              destDir: this.getDestDir()
+            });
+            module.process();
+          }
+        }
+      }
+    });
+  }
   private replaceImport() {
     traverse(this.ast, {
       ImportDeclaration: astPath => {
         const id = astPath.node.source.value;
         let relativePath = '';
         if (id === '@react') {
-          // debugger
           relativePath = path.relative(
             path.parse(path.resolve(this.getCwd(), this.getDestinationPath()))
               .dir,
@@ -199,25 +239,13 @@ export default class JSEntry extends Entry {
             content: JSON.stringify(pageConfig)
           });
         }
-      },
-      // FunctionDeclaration: astPath => {
-      //   if (astPath.node.async) {
-      //     const program: any = astPath.findParent(t.isProgram);
-      //     const hasRegenerator: boolean = program.node.body.some(
-      //       (node: Node) => {
-      //         if (t.isImportDeclaration(node)) {
-      //           return
-      //         }
-      //       }
-      //     );
-      //   }
-      // }
+      }
     });
     this.setOriginalCode(generate(this.ast).code);
   }
   private getWxmlFilename(): string {
     const { root, dir, name } = path.parse(this.getDestinationPath());
-    return path.join(root, dir, name + '.swan');
+    return path.join(root, dir, name + '.wxml');
   }
   private listenWxml() {
     wxml.on('main', ({ content: code }: { content: string }) => {
