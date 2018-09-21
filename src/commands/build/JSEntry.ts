@@ -47,6 +47,7 @@ export default class JSEntry extends Entry {
   private getRelativePath(filePath: string) {
     return path.relative(this.getCwd(), filePath);
   }
+  // 格式化输出当前 Entry 所产生的文件
   private logFiles() {
     const emittedFiles = {
       originalFile: {

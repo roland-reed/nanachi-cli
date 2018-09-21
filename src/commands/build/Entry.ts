@@ -65,6 +65,14 @@ export default class Entry extends File {
     this.originalCode = code;
   }
   public appendExtraFile(file: IFile) {
+    // 如果已存在相同目标路径的文件
+    // 则先将其移除
+    const possibleFileIndex = this.extraFiles.findIndex(
+      v => file.destinationPath === v.destinationPath
+    );
+    if (possibleFileIndex > -1) {
+      this.extraFiles.splice(possibleFileIndex, 1);
+    }
     this.extraFiles.push(file);
   }
   public getCode() {
