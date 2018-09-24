@@ -1,7 +1,10 @@
+import chalk from 'chalk';
+import { execSync } from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import resolve from 'resolve';
 import { getAnuPath } from '../commands/build/utils';
+import * as spinner from './spinner';
 
 const alias: {
   [property: string]: string;
@@ -23,7 +26,18 @@ export const resolvePackage = (name: string, basedir: string) => {
   // 缓存
   if (alias[name]) return alias[name];
   // 尝试解析
-  const resolved = resolve.sync(name, { basedir });
+  let resolved;
+  try {
+    resolved = resolve.sync(name, { basedir });
+  } catch (error) {
+    if (name === 'regenerator-runtime/runtime') {
+      spinner.info(chalk`missing {cyan regenerator-runtime}`);
+      spinner.start(chalk`installing {cyan regenerator-runtime}`);
+      execSync('npm install regenerator-runtime', { cwd: process.cwd() });
+    } else {
+      throw error;
+    }
+  }
   // cjs 解析结果
   alias[name] = resolved;
 

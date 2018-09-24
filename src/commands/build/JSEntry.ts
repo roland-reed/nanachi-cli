@@ -7,7 +7,6 @@ const { transform } = require('../src/translator/jsTransform');
 const { wxml } = require('../src/translator/bridge');
 import * as path from 'path';
 import { resolvePackage } from '../../shared/resolvePackage';
-import * as spinner from '../../shared/spinner';
 import Entry from './Entry';
 import { IEntryOptions } from './Entry';
 import Module from './Module';
@@ -103,13 +102,13 @@ export default class JSEntry extends Entry {
       }
     );
 
-    spinner.stop();
     // tslint:disable-next-line
     console.log(logString);
   }
   private addRegeneratorRuntime() {
     traverse(this.ast, {
       ClassMethod: astPath => {
+        // 使用了 async 函数
         if (astPath.node.async) {
           const program: any = astPath.findParent(t.isProgram);
           const hasRegenerator: boolean = program.node.body.some(
@@ -124,6 +123,7 @@ export default class JSEntry extends Entry {
             }
           );
 
+          // 使用了 async 函数却没有引用 regenerator-runtime
           if (!hasRegenerator) {
             program.node.body.unshift(
               t.importDeclaration(
@@ -131,15 +131,18 @@ export default class JSEntry extends Entry {
                 t.stringLiteral('regenerator-runtime/runtime')
               )
             );
-            const modulePath = resolvePackage(
-              'regenerator-runtime/runtime',
-              this.getDestinationDir()
-            );
+
             const module = new Module({
-              sourcePath: modulePath,
+              sourcePath: path.resolve(
+                this.getCwd(),
+                'node_modules',
+                'regenerator-runtime',
+                'runtime.js'
+              ),
               cwd: this.getCwd(),
               destDir: this.getDestDir()
             });
+
             module.process();
           }
         }
@@ -159,7 +162,9 @@ export default class JSEntry extends Entry {
               this.getCwd(),
               this.getDestDir(),
               'npm',
-              'anujs/dist/ReactWX.js'
+              'anujs',
+              'dist',
+              'ReactWX.js'
             )
           );
         }
