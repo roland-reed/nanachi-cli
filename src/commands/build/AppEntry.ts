@@ -57,7 +57,8 @@ export default class AppEntry extends JSEntry {
       ClassProperty: astPath => {
         if (
           t.isIdentifier(astPath.node.key, {
-            name: 'config'
+            name: 'config',
+            static: true
           })
         ) {
           // tslint:disable-next-line
@@ -80,6 +81,7 @@ export default class AppEntry extends JSEntry {
       4
     );
   }
+  // ./pages/index -> pages/index
   private processPages() {
     this.pages = this.pages.filter(this.isPage).map(page => page.slice(2));
   }
