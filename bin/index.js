@@ -15,6 +15,12 @@ const argv = yargs
     alias: 'h',
     boolean: true
   })
+  .option('force-update-library', {
+    desc: '重新拉取定制版 React',
+    boolean: true,
+    default: false,
+    alias: 'u'
+  })
   .help(false).argv;
 
 cli(argv);

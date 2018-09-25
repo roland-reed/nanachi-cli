@@ -1,10 +1,14 @@
 import Build from './Build';
 
-async function start() {
+interface InterfaceBuildOptions {
+  cwd: string;
+  forceUpdateLibrary: boolean;
+  minify: boolean;
+}
+
+async function start(options: InterfaceBuildOptions) {
   try {
-    const build = new Build({
-      cwd: process.cwd()
-    });
+    const build = new Build(options);
     await build.build();
   } catch (error) {
     // tslint:disable

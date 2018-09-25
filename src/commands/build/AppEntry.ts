@@ -57,9 +57,9 @@ export default class AppEntry extends JSEntry {
       ClassProperty: astPath => {
         if (
           t.isIdentifier(astPath.node.key, {
-            name: 'config',
-            static: true
-          })
+            name: 'config'
+          }) &&
+          t.isClassProperty(astPath.node, { static: true })
         ) {
           // tslint:disable-next-line
           const userAppConfig = eval(

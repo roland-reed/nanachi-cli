@@ -227,23 +227,24 @@ export default class JSEntry extends Entry {
         }
         if (
           t.isIdentifier(astPath.node.key, {
-            name: 'config',
-            static: true
+            name: 'config'
           })
         ) {
-          // tslint:disable-next-line
-          const pageConfig = eval(
-            `(${
-              generate(astPath.node.value, {
-                minified: true
-              }).code
-            })`
-          );
-          this.appendExtraFile({
-            type: 'write',
-            destinationPath: configPath,
-            content: JSON.stringify(pageConfig)
-          });
+          if (t.isClassProperty(astPath.node, { static: true })) {
+            // tslint:disable-next-line
+            const pageConfig = eval(
+              `(${
+                generate(astPath.node.value, {
+                  minified: true
+                }).code
+              })`
+            );
+            this.appendExtraFile({
+              type: 'write',
+              destinationPath: configPath,
+              content: JSON.stringify(pageConfig)
+            });
+          }
         }
       }
     });

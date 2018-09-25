@@ -1,9 +1,8 @@
-const chalk = require('chalk');
 const help = require('./help');
 const { init, build, start } = require('../lib');
 
 function cli(argv) {
-  const { _, minify, h, help: _help } = argv;
+  const { _, minify, h, help: _help, 'force-update-library': forceUpdateLibrary } = argv;
 
   switch (true) {
     case h || _help || _[0] === 'help':
@@ -15,20 +14,19 @@ function cli(argv) {
       break;
 
     case _[0] === 'start':
-      start();
+      start({
+        forceUpdateLibrary
+      });
       break;
 
     case _[0] === 'build':
       build({
-        minify
+        minify,
+        forceUpdateLibrary
       });
       break;
 
     default:
-      // eslint-disable-next-line
-      console.log(
-        chalk`{red Error:} Arguments not recognized, see the help information below.`
-      );
       help();
       break;
   }

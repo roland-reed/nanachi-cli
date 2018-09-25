@@ -19,40 +19,56 @@ interface InterfaceFragment {
   id: string;
   content: string;
 }
+
+interface InterfaceBuild {
+  cwd?: string;
+  minify?: boolean;
+  srcDir?: string;
+  target?: string;
+  destDir?: string;
+  assetsDir?: string;
+  forceUpdateLibrary?: boolean;
+}
 export default class {
   private files: Map<string, Entry | JSEntry | Module>;
   private cwd: string;
+  // 编译目标
+  private target: string;
+  private minify: boolean;
   private srcDir: string;
   private destDir: string;
   private assetsDir: string;
   private watcher: chokidar.FSWatcher;
+  // 是否强制拉取最新定制版 React
+  private forceUpdateLibrary: boolean;
   private nodeModulesFiles: string[];
   private fragments: {
     [property: string]: string;
   };
   constructor({
     cwd = process.cwd(),
+    minify = false,
+    target = 'wx',
     srcDir = 'src',
     destDir = 'dist',
-    assetsDir = 'assets'
-  }: {
-    cwd?: string;
-    srcDir?: string;
-    destDir?: string;
-    assetsDir?: string;
-  }) {
+    assetsDir = 'assets',
+    forceUpdateLibrary = false
+  }: InterfaceBuild) {
     this.cwd = cwd;
+    this.minify = minify;
     this.srcDir = srcDir;
+    this.target = target;
     this.destDir = destDir;
     this.assetsDir = assetsDir;
+    this.forceUpdateLibrary = forceUpdateLibrary;
     this.files = new Map();
     this.nodeModulesFiles = [];
     this.fragments = {};
   }
   public async build() {
     this.beforeStart();
-    if (!getAnuPath()) {
-      await this.fetchLatestReactWX();
+    if (!getAnuPath() || this.forceUpdateLibrary) {
+      await this.fetchLatestReact();
     }
     this.listeningFragments();
     await this.collectDependencies();
@@ -91,14 +107,11 @@ export default class {
       'components',
       'Fragments'
     );
-    await Object.keys(this.fragments).map(
-      id =>
-        new Promise(async (resolve, reject) => {
-          const filePath = destDir + '/' + id + '.wxml';
-          await fs.ensureFile(filePath);
-          await this.writeFile(filePath, this.fragments[id]);
-        })
-    );
+    await Object.keys(this.fragments).map(async id => {
+      const filePath = destDir + '/' + id + '.wxml';
+      await fs.ensureFile(filePath);
+      await this.writeFile(filePath, this.fragments[id]);
+    });
   }
   private async writeFile(filePath: string, content: string) {
     try {
@@ -130,9 +143,11 @@ export default class {
     createEventHandler('unlink');
     process.on('SIGINT', this.beforeExitLog);
   }
-  private async fetchLatestReactWX() {
+  private async fetchLatestReact() {
     try {
-      spinner.start(chalk`fetching latest {cyan ReactWX.js} from GitHub`);
+      spinner.start(
+        chalk`fetching latest customized {cyan React.js} from GitHub`
+      );
       const lib = await axios.get(
         'https://raw.githubusercontent.com/RubyLouvre/anu/master/dist/ReactWX.js'
       );
@@ -144,11 +159,13 @@ export default class {
       await fs.writeFile(filePath, lib.data, {
         encoding: 'utf8'
       });
-      spinner.succeed(chalk`latest {cyan ReactWX.js} fetched from GitHub`);
+      spinner.succeed(
+        chalk`latest customized {cyan React.js} fetched from GitHub`
+      );
     } catch (error) {
       throw error;
       spinner.stop(
-        chalk`Cannot retrieve latest {cyan ReactWX.js} from GitHub, make sure you can access GitHub`
+        chalk`Cannot retrieve latest customized {cyan React.js} from GitHub, make sure you can access GitHub`
       );
       process.exit(0);
     }
@@ -235,8 +252,8 @@ export default class {
   }
   private async collectDependencies() {
     spinner.start('collecting dependencies...');
-    // 如果本地没有 ReactWX.js 的话，alias 中的 @react 和 react 将会是空字符
-    // 因此在获取到 ReactWX.js 之后再解析
+    // 如果本地没有定制版 React 的话，alias 中的 @react 和 react 将会是空字符
+    // 因此在获取到定制版 React 之后再解析
     inputOptions.plugins.push(
       alias({
         '@components': path.resolve(process.cwd(), './src/components'),
