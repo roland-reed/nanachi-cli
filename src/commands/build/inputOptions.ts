@@ -29,6 +29,7 @@ export default {
       ]
     }),
     less({
+      // less 不需要输出到文件
       output: () => ''
     }),
     sass(),

@@ -1,6 +1,6 @@
 import Build from './Build';
 
-interface InterfaceBuildOptions {
+export interface InterfaceBuildOptions {
   cwd: string;
   forceUpdateLibrary: boolean;
   minify: boolean;

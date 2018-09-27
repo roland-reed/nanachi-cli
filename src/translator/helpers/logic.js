@@ -3,6 +3,33 @@ const generate = require('babel-generator').default;
 const jsx = require('../utils');
 const chalk = require('chalk');
 const { createElement, createAttribute } = jsx;
+
+const TARGET = require('../utils').argv.target
+const LOOP_COMMANDS = {
+    wx: 'wx:for',
+    baidu: 's-for',
+    ali: 'a:for'
+}
+const LOOP_ITEM_COMMANDS = {
+    wx: 'wx:for-item',
+    baidu: 's-for-item',
+    ali: 'a:for-item'
+}
+const LOOP_INDEX_COMMANDS = {
+    wx: 'wx:for-index',
+    baidu: 's-for-index',
+    ali: 'a:for-index'
+}
+const IF_COMMANDS = {
+    wx: 'wx:if',
+    baidu: 's-if',
+    ali: 'a:if'
+}
+const ELSE_COMMANDS = {
+    wx: 'wx:if',
+    baidu: 's-if',
+    ali: 'a:if'
+}
 /**
  * 本模板将array.map(fn)变成<block wx:for="{{}}"></block>
  * 将if(xxx){}变成<block wx:if="{{xxx}}"></block>
@@ -53,7 +80,7 @@ function logic(expr, modules) {
 function condition(test, consequent, alternate, modules) {
     var ifNode = createElement(
         'block',
-        [createAttribute('wx:if', parseExpr(test))],
+        [createAttribute(IF_COMMANDS[TARGET], parseExpr(test))],
         [logic(consequent, modules) || wrapText(consequent)]
     );
     var ret = ifNode;
@@ -65,7 +92,7 @@ function condition(test, consequent, alternate, modules) {
 
         var elseNode = createElement(
             'block',
-            [createAttribute('wx:else', 'true')],
+            [createAttribute(ELSE_COMMANDS[TARGET], 'true')],
             [logic(alternate, modules) || wrapText(alternate)]
         );
         ret.children.push(elseNode);
@@ -77,16 +104,15 @@ function condition(test, consequent, alternate, modules) {
 function loop(callee, fn, modules) {
     const attrs = [];
 
-    attrs.push(createAttribute('wx:for', parseExpr(callee.object)));
-    attrs.push(createAttribute('wx:for-item', fn.params[0].name));
-    attrs.push(createAttribute('wx:for-index', fn.params[1].name));
+    attrs.push(createAttribute(LOOP_COMMANDS[TARGET], parseExpr(callee.object)));
+    attrs.push(createAttribute(LOOP_ITEM_COMMANDS[TARGET], fn.params[0].name));
+    attrs.push(createAttribute(LOOP_INDEX_COMMANDS[TARGET], fn.params[1].name));
     if (modules.key) {
         attrs.push(createAttribute('wx:key', jsx.genKey(modules.key)));
 
         modules.key = null;
     } else {
         attrs.push(createAttribute('wx:key', '*this'));
-        // console.log( fn.params[1].name);
     }
 
     const body = t.isBlockStatement(fn.body)

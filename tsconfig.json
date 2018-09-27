@@ -4,13 +4,19 @@
     "module": "es2015",
     "noImplicitAny": true,
     "removeComments": false,
-    "declaration": true,
+    "declaration": false,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "outDir": "es",
+    "baseUrl": "src",
+    "noEmitOnError": true,
     "typeRoots": [
       "node_modules/@types"
-    ]
+    ],
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@services/*": ["services/*"]
+    }
   },
   "include": [
     "src/**/*"

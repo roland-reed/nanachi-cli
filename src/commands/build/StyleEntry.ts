@@ -1,11 +1,12 @@
+import targetExtensions from '@shared/targetExtensions';
 import * as path from 'path';
 import Entry from './Entry';
-import { IEntryOptions } from './Entry';
+import { InterfaceEntryOptions } from './Entry';
 import { renderLess, renderSass } from './utils';
 
 export default class StyleEntry extends Entry {
   private ext: string;
-  constructor(options: IEntryOptions) {
+  constructor(options: InterfaceEntryOptions) {
     super(options);
     this.ext = path.parse(this.getSourcePath()).ext;
   }
@@ -18,7 +19,7 @@ export default class StyleEntry extends Entry {
     if (!this.getDestinationPath()) super.initializeDestination();
     const pathTokens = this.getDestinationPath().split(path.sep);
     const { name } = path.parse(this.getDestinationPath());
-    pathTokens.splice(-1, 1, `${name}.wxss`);
+    pathTokens.splice(-1, 1, `${name}${targetExtensions[this.build.target].style}`);
     this.setDestinationPath(pathTokens.join(path.sep));
   }
   private async transform() {

@@ -44,8 +44,6 @@ function transform(code, opts) {
         ]
     }));
     return result.code;
-
-    // return helpers.moduleToCjs.byCode(result.code).code;
 }
 
 // module.exports = transform;

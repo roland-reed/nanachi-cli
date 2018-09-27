@@ -3,14 +3,14 @@ import traverse from 'babel-traverse';
 import t from 'babel-types';
 import fs from 'fs-extra';
 import * as path from 'path';
-import { IEntryOptions } from './Entry';
+import { InterfaceEntryOptions } from './Entry';
 import JSEntry from './JSEntry';
 
 export default class AppEntry extends JSEntry {
   private appConfig: object;
   private pages: string[];
   private appJSON: string;
-  constructor(options: IEntryOptions) {
+  constructor(options: InterfaceEntryOptions) {
     super(options);
     this.pages = [];
   }

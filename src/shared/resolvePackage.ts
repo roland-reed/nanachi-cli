@@ -1,10 +1,10 @@
+import * as spinner from '@shared/spinner';
 import chalk from 'chalk';
 import { execSync } from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import resolve from 'resolve';
 import { getAnuPath } from '../commands/build/utils';
-import * as spinner from './spinner';
 
 const alias: {
   [property: string]: string;
@@ -52,7 +52,7 @@ export const resolvePackage = (name: string, basedir: string) => {
   try {
     packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   } catch (error) {
-    // 解析失败的结构不会显示
+    // 解析失败的结果不会显示
   }
   // 如果该包存在 ESModule
   if (packageJson.module) {

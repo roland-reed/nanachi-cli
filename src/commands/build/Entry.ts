@@ -1,22 +1,28 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import File, { IFile } from './File';
+import Build from './Build';
+import File, { InterfaceFile } from './File';
 
-export interface IEntryOptions {
+export interface InterfaceEntryOptions {
   sourcePath: string;
   code: string;
   originalCode: string;
   cwd: string;
   destDir: string;
   srcDir: string;
+  silent: boolean;
+  build: Build;
 }
 
 export default class Entry extends File {
+  public readonly silent: boolean;
+  public readonly build: Build;
   private sourcePath: string;
   private originalCode: string;
   private destinationPath: string;
-  private extraFiles: IFile[];
+  private extraFiles: InterfaceFile[];
   private code: string;
+  private srcDir: string;
   private cwd: string;
   private destDir: string;
   private sourceDir: string;
@@ -26,8 +32,11 @@ export default class Entry extends File {
     originalCode = '',
     code = '',
     cwd,
-    destDir
-  }: IEntryOptions) {
+    destDir,
+    silent,
+    build,
+    srcDir
+  }: InterfaceEntryOptions) {
     super();
     this.cwd = cwd;
     this.sourceDir = path.parse(sourcePath).dir;
@@ -35,7 +44,13 @@ export default class Entry extends File {
     this.destDir = destDir;
     this.sourcePath = sourcePath;
     this.originalCode = originalCode;
+    this.silent = silent;
+    this.srcDir = srcDir;
+    this.build = build;
     this.extraFiles = [];
+  }
+  public getSrcDir() {
+    return this.srcDir;
   }
   public getSourceDir() {
     return this.sourceDir;
@@ -64,7 +79,7 @@ export default class Entry extends File {
   public setOriginalCode(code: string) {
     this.originalCode = code;
   }
-  public appendExtraFile(file: IFile) {
+  public appendExtraFile(file: InterfaceFile) {
     // 如果已存在相同目标路径的文件
     // 则先将其移除
     const possibleFileIndex = this.extraFiles.findIndex(

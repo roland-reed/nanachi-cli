@@ -1,6 +1,6 @@
+import * as spinner from '@shared/spinner';
 import axios from 'axios';
 import chalk from 'chalk';
-import * as spinner from '../../shared/spinner';
 
 interface InterfaceTEMPLATE {
   [property: string]: {

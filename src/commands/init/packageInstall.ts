@@ -1,6 +1,6 @@
+import * as spinner from '@shared/spinner';
 import chalk from 'chalk';
 import { spawn } from 'child_process';
-import * as spinner from '../../shared/spinner';
 
 export default async function start(
   registry: string,

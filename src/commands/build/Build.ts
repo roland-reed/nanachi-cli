@@ -1,39 +1,45 @@
+import LogService from '@services/Log';
+import targetExtensions from '@shared/targetExtensions';
 import axios from 'axios';
 import chalk from 'chalk';
 import chokidar from 'chokidar';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import rollup from 'rollup';
-import * as spinner from '../../shared/spinner';
 import AppEntry from './AppEntry';
-import Entry from './Entry';
+import Entry, { InterfaceEntryOptions } from './Entry';
 import inputOptions from './inputOptions';
 import JSEntry from './JSEntry';
 import Module from './Module';
 import StyleEntry from './StyleEntry';
 import { getAnuPath } from './utils';
 const alias = require('rollup-plugin-alias');
-const { wxml } = require('../src/translator/bridge');
+// treat as external dependency
+const { template } = require('../src/translator/bridge');
 
 interface InterfaceFragment {
   id: string;
   content: string;
 }
 
+type BuildTarget = 'wx' | 'baidu' | 'ali';
+
 interface InterfaceBuild {
   cwd?: string;
   minify?: boolean;
   srcDir?: string;
-  target?: string;
+  target?: BuildTarget;
   destDir?: string;
   assetsDir?: string;
+  silent?: boolean;
   forceUpdateLibrary?: boolean;
 }
-export default class {
+export default class Build {
+  public readonly silent: boolean;
+  // 编译目标
+  public readonly target: string;
   private files: Map<string, Entry | JSEntry | Module>;
   private cwd: string;
-  // 编译目标
-  private target: string;
   private minify: boolean;
   private srcDir: string;
   private destDir: string;
@@ -42,6 +48,7 @@ export default class {
   // 是否强制拉取最新定制版 React
   private forceUpdateLibrary: boolean;
   private nodeModulesFiles: string[];
+  private logService: LogService;
   private fragments: {
     [property: string]: string;
   };
@@ -52,7 +59,8 @@ export default class {
     srcDir = 'src',
     destDir = 'dist',
     assetsDir = 'assets',
-    forceUpdateLibrary = false
+    forceUpdateLibrary = false,
+    silent = false
   }: InterfaceBuild) {
     this.cwd = cwd;
     this.minify = minify;
@@ -60,10 +68,15 @@ export default class {
     this.target = target;
     this.destDir = destDir;
     this.assetsDir = assetsDir;
+    this.silent = silent;
     this.forceUpdateLibrary = forceUpdateLibrary;
     this.files = new Map();
     this.nodeModulesFiles = [];
     this.fragments = {};
+    this.logService = new LogService({ silent });
+  }
+  public get spinner() {
+    return this.logService;
   }
   public async build() {
     this.beforeStart();
@@ -73,12 +86,12 @@ export default class {
     this.listeningFragments();
     await this.collectDependencies();
     await this.process();
-    spinner.stop();
+    this.spinner.stop();
   }
   public async start() {
     await this.build();
     this.watch();
-    spinner.succeed(
+    this.spinner.succeed(
       chalk`Starting incremental compilation at {cyan ${this.srcDir}}\n`
     );
   }
@@ -88,12 +101,12 @@ export default class {
     const relativeSourceDir = path.relative(this.cwd, sourceDir);
     const relativeDestinationDir = path.relative(this.cwd, destinationDir);
     await fs.copy(sourceDir, destinationDir);
-    spinner.succeed(
+    this.spinner.succeed(
       chalk`Copied files from {cyan ${relativeSourceDir}} to {cyan ${relativeDestinationDir}}\n`
     );
   }
   private listeningFragments() {
-    wxml.on('fragment', (fragment: InterfaceFragment) => {
+    template.on('fragment', (fragment: InterfaceFragment) => {
       const { id, content } = fragment;
       if (!this.fragments[id]) {
         this.fragments[id] = content;
@@ -108,7 +121,7 @@ export default class {
       'Fragments'
     );
     await Object.keys(this.fragments).map(async id => {
-      const filePath = destDir + '/' + id + '.wxml';
+      const filePath = destDir + '/' + id + targetExtensions[this.target].template;
       await fs.ensureFile(filePath);
       await this.writeFile(filePath, this.fragments[id]);
     });
@@ -141,13 +154,14 @@ export default class {
     createEventHandler('add');
     createEventHandler('change');
     createEventHandler('unlink');
-    process.on('SIGINT', this.beforeExitLog);
+    process.on('SIGINT', () => this.beforeExitLog());
   }
   private async fetchLatestReact() {
     try {
-      spinner.start(
+      this.spinner.start(
         chalk`fetching latest customized {cyan React.js} from GitHub`
       );
+
       const lib = await axios.get(
         'https://raw.githubusercontent.com/RubyLouvre/anu/master/dist/ReactWX.js'
       );
@@ -159,12 +173,12 @@ export default class {
       await fs.writeFile(filePath, lib.data, {
         encoding: 'utf8'
       });
-      spinner.succeed(
+      this.spinner.succeed(
         chalk`latest customized {cyan React.js} fetched from GitHub`
       );
     } catch (error) {
       throw error;
-      spinner.stop(
+      this.spinner.stop(
         chalk`Cannot retrieve latest customized {cyan React.js} from GitHub, make sure you can access GitHub`
       );
       process.exit(0);
@@ -192,7 +206,9 @@ export default class {
       code: '',
       originalCode: await fs.readFile(addedPath, 'utf8'),
       srcDir: this.srcDir,
-      destDir: this.destDir
+      destDir: this.destDir,
+      silent: this.silent,
+      build: this
     });
     this.watcher.add(addedPath);
     const file = this.files.get(addedPath);
@@ -201,25 +217,15 @@ export default class {
     }
   }
   private beforeStart() {
-    spinner.info(
+    this.spinner.info(
       chalk`{bold.underline anu@${require('../package.json').version}}`
     );
   }
   private beforeExitLog() {
-    spinner.stop(chalk`{green.bold \nBye!}`);
+    this.spinner.stop(chalk`{green.bold \nBye!}`);
     process.exit(0);
   }
-  private createModule(
-    module: {
-      sourcePath: string;
-      cwd: string;
-      code: string;
-      srcDir: string;
-      destDir: string;
-      originalCode: string;
-    },
-    index?: number
-  ) {
+  private createModule(module: InterfaceEntryOptions, index?: number) {
     const ext = path.parse(module.sourcePath).ext;
     switch (true) {
       case index === 0:
@@ -251,7 +257,7 @@ export default class {
     }
   }
   private async collectDependencies() {
-    spinner.start('collecting dependencies...');
+    this.spinner.start('collecting dependencies...');
     // 如果本地没有定制版 React 的话，alias 中的 @react 和 react 将会是空字符
     // 因此在获取到定制版 React 之后再解析
     inputOptions.plugins.push(
@@ -268,7 +274,9 @@ export default class {
       originalCode: module.originalCode,
       cwd: this.cwd,
       srcDir: this.srcDir,
-      destDir: this.destDir
+      destDir: this.destDir,
+      silent: this.silent,
+      build: this
     }));
     modules.push({
       originalCode: '',
@@ -276,7 +284,9 @@ export default class {
       sourcePath: getAnuPath(),
       cwd: this.cwd,
       srcDir: this.srcDir,
-      destDir: this.destDir
+      destDir: this.destDir,
+      silent: this.silent,
+      build: this
     });
     this.files = new Map();
     // rollup 在使用了 rollup-plugin-commonjs 插件之后
@@ -285,7 +295,7 @@ export default class {
     modules
       .filter(module => path.isAbsolute(module.sourcePath))
       .forEach(this.createModule, this);
-    spinner.succeed(
+    this.spinner.succeed(
       chalk`dependencies collected, {cyan ${this.files.size.toString()}} entries total`
     );
   }
@@ -295,8 +305,8 @@ export default class {
     } else {
       await fs.ensureDir(this.destDir);
     }
-    spinner.succeed(chalk`{cyan ${this.destDir}} has been emptied`);
-    spinner.start('compiling...');
+    this.spinner.succeed(chalk`{cyan ${this.destDir}} has been emptied`);
+    this.spinner.start('compiling...');
   }
   private async process() {
     await this.emptyDir();

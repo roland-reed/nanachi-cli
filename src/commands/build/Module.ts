@@ -1,8 +1,8 @@
+import { resolvePackage } from '@shared/resolvePackage';
 import babelCore from 'babel-core';
 import * as t from 'babel-types';
 import fs from 'fs-extra';
 import * as path from 'path';
-import { resolvePackage } from '../../shared/resolvePackage';
 import File from './File';
 
 export interface IModule {
@@ -20,7 +20,12 @@ export default class Module extends File {
   private destinationPath: string;
   private destinationDir: string;
   private destinationDirName: string;
-  constructor({ sourcePath, destinationDirName = 'npm', cwd, destDir }: IModule) {
+  constructor({
+    sourcePath,
+    destinationDirName = 'npm',
+    cwd,
+    destDir
+  }: IModule) {
     super();
     this.cwd = cwd;
     this.destDir = destDir;

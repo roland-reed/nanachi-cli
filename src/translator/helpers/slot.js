@@ -26,7 +26,7 @@ module.exports = function slotHelper(
     if (!modules.fragmentPath) {
         modules.fragmentPath = path.join(process.cwd(), 'dist', 'components', 'Fragments');
     }
-    bridge.wxml.emit('fragment', {
+    bridge.template.emit('fragment', {
         content: wxml,
         id: fragmentUid
     })

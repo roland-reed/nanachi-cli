@@ -1,8 +1,8 @@
+import * as spinner from '@shared/spinner';
 import chalk from 'chalk';
 import { exec } from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as spinner from '../../shared/spinner';
 
 export interface InterfaceGitClone {
   gitRepository: string;
@@ -36,7 +36,7 @@ async function initGitRepository(target: string) {
         cwd: target
       },
       err => {
-        if (err) reject(err);
+        if (err) return reject(err);
         resolve();
       }
     );

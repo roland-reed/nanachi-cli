@@ -1,4 +1,6 @@
 import rollupPluginBabel from 'rollup-plugin-babel';
+import rollupPluginAlias from 'rollup-plugin-alias';
+import * as path from 'path';
 
 export default {
   input: 'es/index.js',
@@ -24,7 +26,8 @@ export default {
     'less',
     'node-sass',
     'babel-core',
-    'axios'
+    'axios',
+    '@shared'
   ],
   plugins: [
     rollupPluginBabel({
@@ -38,6 +41,10 @@ export default {
           }
         ]
       ]
+    }),
+    rollupPluginAlias({
+      '@shared': path.join(__dirname, 'es', 'shared'),
+      '@services': path.join(__dirname, 'es', 'services')
     })
   ]
 };

@@ -3,10 +3,17 @@ const prettifyXml = require('prettify-xml');
 const t = require('babel-types');
 const wxmlHelper = require('./wxml');
 const babel = require('babel-core');
-const queue = require('../queue');
 const bridge = require('../bridge');
 const path = require('path');
 const functionAliasConfig = require('./functionNameAliasConfig');
+
+const TARGET = require('../utils').argv.target;
+
+const EXTENSIONS = {
+    baidu: '.swan',
+    wx: '.wxml',
+    ali: '.axml'
+}
 
 /**
  * 将return后面的内容进行转换，再变成wxml
@@ -67,7 +74,7 @@ exports.exit = function(astPath, type, componentName, modules) {
                 if (modules.usedComponents[i]) {
                     wxml = `<import src="${
                         modules.importComponents[i]
-                    }.wxml" />\n${wxml}`;
+                    }${EXTENSIONS[TARGET]}" />\n${wxml}`;
                 }
             }
             var enqueueData = {
@@ -88,8 +95,8 @@ exports.exit = function(astPath, type, componentName, modules) {
                     dep.addImportTag(fragmentUid);
                 });
             }
-            bridge.wxml.emit('main', { content: enqueueData.code });
-            bridge.wxml.emit('fragment', { id: componentName, content: enqueueData.code });
+            bridge.template.emit('main', { content: enqueueData.code });
+            bridge.template.emit('fragment', { id: componentName, content: enqueueData.code });
             break;
         default:
             break;
@@ -104,7 +111,7 @@ function addImportTag(fragmentUid) {
             'src',
             'components',
             'Fragments',
-            fragmentUid + '.wxml'
+            fragmentUid + EXTENSIONS[TARGET] || '.wxml'
         )
     );
     src = process.platform === 'win32' ? src.replace(/\\/g, '/') : src;

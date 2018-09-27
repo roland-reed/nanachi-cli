@@ -21,6 +21,21 @@ const argv = yargs
     default: false,
     alias: 'u'
   })
+  .option('silent', {
+    desc: '是否静默编译',
+    boolean: true,
+    default: false,
+    alias: 's'
+  })
+  .option('target', {
+    desc: '编译目标',
+    alias: 't',
+    default: 'wx'
+  })
   .help(false).argv;
 
 cli(argv);
+
+module.exports = {
+  target: argv.target
+}

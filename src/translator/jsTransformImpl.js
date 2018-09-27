@@ -117,11 +117,7 @@ module.exports = {
         specifiers.forEach(item => {
             //重点，保持所有引入的组件名及它们的路径，用于<import />
             modules.importComponents[item.local.name] = source;
-
-            //process alias for package.json alias field;
-            // helpers.resolveAlias(astPath, modules, item.local.name);
         });
-        // helpers.copyNpmModules(modules.current, source, node);
     },
     ExportDefaultDeclaration: {
         exit(astPath, state) {
@@ -222,7 +218,6 @@ module.exports = {
             astPath.remove();
         }
     },
-    MemberExpression() {},
     AssignmentExpression(astPath, state) {
         let modules = utils.getAnu(state);
         // 转换微信小程序component的properties对象为defaultProps
@@ -357,7 +352,6 @@ module.exports = {
                 );
 
                 if (modules.indexArr) {
-                    //  console.log(nodeName, modules.indexArr+'' );
                     attributes.push(
                         utils.createAttribute(
                             '$$index',
@@ -483,9 +477,7 @@ module.exports = {
                         attrs.push(utils.createAttribute('renderUid',uuid));
                         astPath.parentPath.renderProps = attrValue;
                         astPath.parentPath.renderUid = uuid;
-                        // astPath.parentPath.host = 
                         modules.is = [];
-                        // console.log(generate(attrValue).code);
                     }
                 }
             }

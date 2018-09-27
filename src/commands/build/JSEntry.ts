@@ -1,14 +1,17 @@
+import { resolvePackage } from '@shared/resolvePackage';
+import targetExtensions from '@shared/targetExtensions';
 import generate from 'babel-generator';
 import traverse from 'babel-traverse';
 import t from 'babel-types';
 import babylon from 'babylon';
 import chalk from 'chalk';
+// treat as external dependency
 const { transform } = require('../src/translator/jsTransform');
-const { wxml } = require('../src/translator/bridge');
+// treat as external dependency
+const { template } = require('../src/translator/bridge');
 import * as path from 'path';
-import { resolvePackage } from '../../shared/resolvePackage';
 import Entry from './Entry';
-import { IEntryOptions } from './Entry';
+import { InterfaceEntryOptions } from './Entry';
 import Module from './Module';
 import { formatSize } from './utils';
 
@@ -16,10 +19,10 @@ export default class JSEntry extends Entry {
   public type: symbol;
   public ast: any;
   private listen: boolean;
-  constructor(options: IEntryOptions) {
+  constructor(options: InterfaceEntryOptions) {
     super(options);
     this.listen = false;
-    this.listenWxml();
+    this.listenTemplate();
   }
   public parse() {
     if (this.ast) return;
@@ -48,6 +51,7 @@ export default class JSEntry extends Entry {
   }
   // 格式化输出当前 Entry 所产生的文件
   private logFiles() {
+    if (this.silent) return;
     const emittedFiles = {
       originalFile: {
         path: this.getRelativePath(this.getSourcePath()),
@@ -189,16 +193,21 @@ export default class JSEntry extends Entry {
             absolutePathOfDist
           );
         }
+        // 假设从 /a/b -> /a/b/c/d
+        // path.relative() 的结果是 c/d
+        // 这种形式在百度智能小程序中会失败
+        // 因此需要在前面加 ./
         if (relativePath && !relativePath.startsWith('./')) {
           relativePath = './' + relativePath;
         }
         astPath.node.source.value = relativePath;
       },
       JSXAttribute: astPath => {
+        // 将以 ./ 或者 ../ 开头的 src 属性视为静态资源
         if (astPath.node.name.name === 'src') {
           if (t.isStringLiteral(astPath.node.value)) {
             const filePath = astPath.node.value.value;
-            if (/\.{0,2}\/.*/.test(filePath)) {
+            if (/^\.{0,2}\/.*/.test(filePath)) {
               const destinationPath = path.resolve(
                 this.getDestinationDir(),
                 astPath.node.value.value
@@ -244,22 +253,31 @@ export default class JSEntry extends Entry {
               destinationPath: configPath,
               content: JSON.stringify(pageConfig)
             });
+          } else {
+            const filePath = path.relative(this.getCwd(), this.getSourcePath());
+            this.build.spinner.warn(
+              chalk`Did you forget to add static before {cyan config} at {bold.underline ${filePath}} ?\n`
+            );
           }
         }
       }
     });
     this.setOriginalCode(generate(this.ast).code);
   }
-  private getWxmlFilename(): string {
+  private getTemplateFilename(): string {
     const { root, dir, name } = path.parse(this.getDestinationPath());
-    return path.join(root, dir, name + '.wxml');
+    return path.join(
+      root,
+      dir,
+      name + targetExtensions[this.build.target].template
+    );
   }
-  private listenWxml() {
-    wxml.on('main', ({ content: code }: { content: string }) => {
+  private listenTemplate() {
+    template.on('main', ({ content: code }: { content: string }) => {
       if (this.listen) {
         this.appendExtraFile({
           type: 'write',
-          destinationPath: this.getWxmlFilename(),
+          destinationPath: this.getTemplateFilename(),
           content: code
         });
       }

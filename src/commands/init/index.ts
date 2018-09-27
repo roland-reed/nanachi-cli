@@ -1,6 +1,6 @@
+import * as spinner from '@shared/spinner';
 import chalk from 'chalk';
 import * as path from 'path';
-import * as spinner from '../../shared/spinner';
 import changePackageName from './changePackageName';
 import gitClone from './gitClone';
 import install from './packageInstall';
@@ -57,7 +57,9 @@ export default async function init() {
 
     const gitRepository = templates[template].url;
 
-    spinner.start(chalk`cloning into {cyan ${name}} from {cyan ${gitRepository}}`);
+    spinner.start(
+      chalk`cloning into {cyan ${name}} from {cyan ${gitRepository}}`
+    );
 
     await gitClone({
       checkout: templates[template].checkout,

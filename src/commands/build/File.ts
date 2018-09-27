@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 
-export interface IFile {
+export interface InterfaceFile {
   type: string;
   sourcePath?: string;
   content?: string;
@@ -8,7 +8,7 @@ export interface IFile {
 }
 
 export default class File {
-  public async write({ content, destinationPath, type, sourcePath }: IFile) {
+  public async write({ content, destinationPath, type, sourcePath }: InterfaceFile) {
     switch (type) {
       case 'write':
         await fs.ensureFile(destinationPath);
