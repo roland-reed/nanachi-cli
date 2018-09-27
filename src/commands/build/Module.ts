@@ -10,11 +10,13 @@ export interface IModule {
   destDir: string;
   destinationDirName?: string;
   cwd: string;
+  target: string;
 }
 
 export default class Module extends File {
   private cwd: string;
   private code: string;
+  private target: string;
   private destDir: string;
   private sourcePath: string;
   private destinationPath: string;
@@ -24,11 +26,13 @@ export default class Module extends File {
     sourcePath,
     destinationDirName = 'npm',
     cwd,
+    target,
     destDir
   }: IModule) {
     super();
     this.cwd = cwd;
     this.destDir = destDir;
+    this.target = target;
     this.sourcePath = sourcePath;
     this.destinationDirName = destinationDirName;
   }
@@ -88,7 +92,7 @@ export default class Module extends File {
                 if (astPath.node.callee.name === 'require') {
                   const id = astPath.node.arguments[0].value;
                   if (!id.startsWith('./')) {
-                    const realPath = resolvePackage(id, this.cwd);
+                    const realPath = resolvePackage(id, this.cwd, this.target);
                     const relativePathFromNodeModules = path.relative(
                       path.resolve(this.cwd, 'node_modules'),
                       path.resolve(realPath)
@@ -109,7 +113,8 @@ export default class Module extends File {
                 if (!id.startsWith('./')) {
                   const realPath = resolvePackage(
                     id,
-                    path.parse(this.getSourcePath()).dir
+                    path.parse(this.getSourcePath()).dir,
+                    this.target
                   );
                   const relativePathFromNodeModules = path.relative(
                     path.resolve(this.cwd, 'node_modules'),

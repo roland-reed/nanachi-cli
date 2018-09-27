@@ -1,5 +1,4 @@
-//将<view aaa={this.state.xxx}> 转换成 <view aaa="{{xxx}}">
-
+const TARGET = require('../utils').argv.target
 const t = require('babel-types');
 const generate = require('babel-generator').default;
 const styleHelper = require('./inlineStyle');
@@ -7,17 +6,15 @@ const styleHelper = require('./inlineStyle');
 function bindEvent(astPath) {
     replaceWithExpr(astPath, 'dispatchEvent', true);
 }
-// 形如 React.collectStyle({ width: index + 'px' }, this.props, "style2313" + index)
-// 输出  "style2313" + index)
-// function handlePropsStyleName(str) {
-//     let strArr = str.split(',');
-//     return strArr[strArr.length - 1].trim();
-// }
 
 module.exports = function(astPath) {
     var expr = astPath.node.expression;
     var attrName = astPath.parent.name.name;
-    var isEvent = /^(bind|catch)/.test(attrName);
+    if (TARGET === 'ali') {
+        var isEvent = /^(on|catch)/.test(attrName);
+    } else {
+        var isEvent = /^(bind|catch)/.test(attrName);
+    }
     var attrValue = generate(expr).code;
     switch (astPath.node.expression.type) {
         case 'NumericLiteral': //11

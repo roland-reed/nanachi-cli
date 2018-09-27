@@ -1,3 +1,4 @@
+import customizedReactFileNames from '@shared/customizedReactFileNames';
 import chalk from 'chalk';
 import less from 'less';
 import nodeSass from 'node-sass';
@@ -5,12 +6,12 @@ import resolve from 'resolve';
 
 let anujsPath: string;
 
-export const getAnuPath = (): string => {
+export const getAnuPath = (target: string): string => {
   if (anujsPath) {
     return anujsPath;
   } else {
     try {
-      return (anujsPath = resolve.sync('anujs/dist/ReactWX.js', {
+      return (anujsPath = resolve.sync(`anujs/dist/${customizedReactFileNames[target].primary}`, {
         basedir: process.cwd()
       }));
     } catch (error) {

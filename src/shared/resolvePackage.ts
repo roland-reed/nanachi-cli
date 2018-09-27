@@ -8,11 +8,16 @@ import { getAnuPath } from '../commands/build/utils';
 
 const alias: {
   [property: string]: string;
-} = {
-  react: getAnuPath()
-};
+} = {};
 
-export const resolvePackage = (name: string, basedir: string) => {
+export const resolvePackage = (
+  name: string,
+  basedir: string,
+  target: string
+) => {
+  if (name === 'react') {
+    alias[name] = getAnuPath(target);
+  }
   if (name.startsWith('@components')) {
     return path.resolve(
       process.cwd(),

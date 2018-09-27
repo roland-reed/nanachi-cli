@@ -1,4 +1,5 @@
 import LogService from '@services/Log';
+import customizedReactFileNames from '@shared/customizedReactFileNames';
 import targetExtensions from '@shared/targetExtensions';
 import axios from 'axios';
 import chalk from 'chalk';
@@ -80,7 +81,7 @@ export default class Build {
   }
   public async build() {
     this.beforeStart();
-    if (!getAnuPath() || this.forceUpdateLibrary) {
+    if (!getAnuPath(this.target) || this.forceUpdateLibrary) {
       await this.fetchLatestReact();
     }
     this.listeningFragments();
@@ -121,7 +122,8 @@ export default class Build {
       'Fragments'
     );
     await Object.keys(this.fragments).map(async id => {
-      const filePath = destDir + '/' + id + targetExtensions[this.target].template;
+      const filePath =
+        destDir + '/' + id + targetExtensions[this.target].template;
       await fs.ensureFile(filePath);
       await this.writeFile(filePath, this.fragments[id]);
     });
@@ -155,33 +157,39 @@ export default class Build {
     createEventHandler('change');
     createEventHandler('unlink');
     process.on('SIGINT', () => this.beforeExitLog());
+    process.on('uncaughtException', () => process.exit(1));
+    process.on('unhandledRejection', () => process.exit(1));
   }
   private async fetchLatestReact() {
-    try {
-      this.spinner.start(
-        chalk`fetching latest customized {cyan React.js} from GitHub`
-      );
+    this.spinner.start(
+      chalk`fetching latest customized {cyan React} library from GitHub`
+    );
 
-      const lib = await axios.get(
-        'https://raw.githubusercontent.com/RubyLouvre/anu/master/dist/ReactWX.js'
-      );
+    const libraryName = customizedReactFileNames[this.target].primary;
+    const libraryRemoteUri = `https://raw.githubusercontent.com/RubyLouvre/anu/master/dist/${libraryName}`;
+
+    try {
+      const lib = await axios.get(libraryRemoteUri);
       const filePath = path.resolve(
         this.cwd,
-        'node_modules/anujs/dist/ReactWX.js'
+        `node_modules/anujs/dist/${
+          customizedReactFileNames[this.target].primary
+        }`
       );
+
       await fs.ensureFile(filePath);
       await fs.writeFile(filePath, lib.data, {
         encoding: 'utf8'
       });
       this.spinner.succeed(
-        chalk`latest customized {cyan React.js} fetched from GitHub`
+        chalk`latest customized {cyan React} library fetched from GitHub`
       );
     } catch (error) {
-      throw error;
       this.spinner.stop(
-        chalk`Cannot retrieve latest customized {cyan React.js} from GitHub, make sure you can access GitHub`
+        chalk`Cannot retrieve latest customized {cyan React} library` +
+          chalk` from {cyan ${libraryRemoteUri}}, make sure you can access GitHub`
       );
-      process.exit(0);
+      process.exit(1);
     }
   }
   private async watchChange(changedPath: string) {
@@ -208,7 +216,8 @@ export default class Build {
       srcDir: this.srcDir,
       destDir: this.destDir,
       silent: this.silent,
-      build: this
+      build: this,
+      target: this.target
     });
     this.watcher.add(addedPath);
     const file = this.files.get(addedPath);
@@ -239,7 +248,8 @@ export default class Build {
             cwd: module.cwd,
             sourcePath: module.sourcePath,
             destinationDirName: 'npm',
-            destDir: this.destDir
+            destDir: this.destDir,
+            target: this.target
           })
         );
         break;
@@ -263,8 +273,8 @@ export default class Build {
     inputOptions.plugins.push(
       alias({
         '@components': path.resolve(process.cwd(), './src/components'),
-        '@react': getAnuPath(),
-        react: getAnuPath()
+        '@react': getAnuPath(this.target),
+        react: getAnuPath(this.target)
       })
     );
     const bundle = await rollup.rollup(inputOptions);
@@ -276,17 +286,19 @@ export default class Build {
       srcDir: this.srcDir,
       destDir: this.destDir,
       silent: this.silent,
-      build: this
+      build: this,
+      target: this.target
     }));
     modules.push({
       originalCode: '',
       code: '',
-      sourcePath: getAnuPath(),
+      sourcePath: getAnuPath(this.target),
       cwd: this.cwd,
       srcDir: this.srcDir,
       destDir: this.destDir,
       silent: this.silent,
-      build: this
+      build: this,
+      target: this.target
     });
     this.files = new Map();
     // rollup 在使用了 rollup-plugin-commonjs 插件之后

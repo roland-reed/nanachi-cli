@@ -12,10 +12,12 @@ export interface InterfaceEntryOptions {
   srcDir: string;
   silent: boolean;
   build: Build;
+  target: string;
 }
 
 export default class Entry extends File {
   public readonly silent: boolean;
+  public readonly target: string;
   public readonly build: Build;
   private sourcePath: string;
   private originalCode: string;
@@ -34,6 +36,7 @@ export default class Entry extends File {
     cwd,
     destDir,
     silent,
+    target,
     build,
     srcDir
   }: InterfaceEntryOptions) {
@@ -47,6 +50,7 @@ export default class Entry extends File {
     this.silent = silent;
     this.srcDir = srcDir;
     this.build = build;
+    this.target = target;
     this.extraFiles = [];
   }
   public getSrcDir() {

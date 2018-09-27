@@ -1,3 +1,4 @@
+import customizedReactFileNames from '@shared/customizedReactFileNames';
 import { resolvePackage } from '@shared/resolvePackage';
 import targetExtensions from '@shared/targetExtensions';
 import generate from 'babel-generator';
@@ -144,7 +145,8 @@ export default class JSEntry extends Entry {
                 'runtime.js'
               ),
               cwd: this.getCwd(),
-              destDir: this.getDestDir()
+              destDir: this.getDestDir(),
+              target: this.target
             });
 
             module.process();
@@ -168,7 +170,7 @@ export default class JSEntry extends Entry {
               'npm',
               'anujs',
               'dist',
-              'ReactWX.js'
+              customizedReactFileNames[this.build.target].primary
             )
           );
         }
@@ -176,7 +178,7 @@ export default class JSEntry extends Entry {
         if (!relativePath) {
           const relativePathToNodeModules = path.relative(
             path.resolve(this.getCwd(), 'node_modules'),
-            resolvePackage(id, this.getSourceDir())
+            resolvePackage(id, this.getSourceDir(), this.build.target)
           );
           const absolutePathOfDist = path.resolve(
             this.getCwd(),

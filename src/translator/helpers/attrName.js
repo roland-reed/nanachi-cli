@@ -1,4 +1,4 @@
-const TARGET = require('../utils').argv.target
+const TARGET = require('../utils').argv.target;
 
 module.exports = function mapPropName(astPath) {
     var nameNode = astPath.node.name;
