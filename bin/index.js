@@ -29,6 +29,7 @@ const argv = yargs
   })
   .option('target', {
     desc: '编译目标',
+    boolean: false,
     alias: 't',
     default: 'wx'
   })

@@ -37,16 +37,16 @@ export default class AppEntry extends JSEntry {
       'project.config.json'
     );
 
-    if (await fs.pathExists(userProjectConfigPath)) {
-      this.appendExtraFile({
-        content: await fs.readFile(userProjectConfigPath, 'utf8'),
-        type: 'write',
-        destinationPath: path.resolve(
-          this.getDestinationDir(),
-          'project.config.json'
-        )
-      });
-    }
+    if (!(await fs.pathExists(userProjectConfigPath))) return;
+
+    this.appendExtraFile({
+      sourcePath: userProjectConfigPath,
+      type: 'copy',
+      destinationPath: path.resolve(
+        this.getDestinationDir(),
+        'project.config.json'
+      )
+    });
   }
   private traverse() {
     traverse(this.ast, {

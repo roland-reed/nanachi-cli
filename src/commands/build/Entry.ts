@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import Build from './Build';
-import File, { InterfaceFile } from './File';
+import File, { InterfaceCopyFile, InterfaceWriteFile } from './File';
 
 export interface InterfaceEntryOptions {
   sourcePath: string;
@@ -22,7 +22,7 @@ export default class Entry extends File {
   private sourcePath: string;
   private originalCode: string;
   private destinationPath: string;
-  private extraFiles: InterfaceFile[];
+  private extraFiles: Array<InterfaceCopyFile | InterfaceWriteFile>;
   private code: string;
   private srcDir: string;
   private cwd: string;
@@ -83,7 +83,7 @@ export default class Entry extends File {
   public setOriginalCode(code: string) {
     this.originalCode = code;
   }
-  public appendExtraFile(file: InterfaceFile) {
+  public appendExtraFile(file: InterfaceWriteFile | InterfaceCopyFile) {
     // 如果已存在相同目标路径的文件
     // 则先将其移除
     const possibleFileIndex = this.extraFiles.findIndex(

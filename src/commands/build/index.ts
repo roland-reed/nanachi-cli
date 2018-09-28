@@ -11,8 +11,9 @@ async function start(options: InterfaceBuildOptions) {
     const build = new Build(options);
     await build.build();
   } catch (error) {
-    // tslint:disable
+    // tslint:disable-next-line
     console.log(error);
+    process.exit(1);
   }
 }
 
