@@ -36,7 +36,3 @@ const argv = yargs
   .help(false).argv;
 
 cli(argv);
-
-module.exports = {
-  target: argv.target
-}

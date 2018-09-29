@@ -1,3 +1,4 @@
+import TARGETS from '@shared/targets';
 import generate from 'babel-generator';
 import traverse from 'babel-traverse';
 import t from 'babel-types';
@@ -69,7 +70,7 @@ export default class AppEntry extends JSEntry {
               }).code
             })`
           );
-          this.appConfig = userAppConfig;
+          this.appConfig = this.processAppJSON(userAppConfig);
         }
       }
     });
@@ -91,5 +92,42 @@ export default class AppEntry extends JSEntry {
       destinationPath: path.resolve(this.getDestinationDir(), 'app.json'),
       content: this.appJSON
     });
+  }
+  private processAppJSON(original: any) {
+    const target = this.build.target;
+    interface InterfacePropertyAlias {
+      [property: string]: {
+        ali?: string;
+        baidu?: string;
+        [property: string]: string;
+      };
+    }
+    interface InterfacePropertyMap {
+      [property: string]: InterfacePropertyAlias;
+    }
+
+    const propertyMap: InterfacePropertyMap = {
+      window: {
+        navigationBarBackgroundColor: {
+          ali: 'titleBarColor'
+        },
+        navigationBarTitleText: {
+          ali: 'defaultTitle'
+        },
+        enablePullDownRefresh: {
+          ali: 'pullRefresh'
+        }
+      }
+    };
+    if (target !== TARGETS.wx) {
+      Object.keys(original.window).forEach(k => {
+        const key = propertyMap.window[k];
+        if (key) {
+          original.window[key[target]] = original.window[k];
+          delete original.window[k];
+        }
+      });
+    }
+    return original;
   }
 }

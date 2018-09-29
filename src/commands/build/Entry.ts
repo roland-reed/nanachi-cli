@@ -69,7 +69,6 @@ export default class Entry extends File {
   public async reset() {
     this.code = '';
     this.extraFiles = [];
-    await this.loadContent();
   }
   public getDestDir() {
     return this.destDir;
@@ -134,7 +133,7 @@ export default class Entry extends File {
   public getExtraFiles() {
     return this.extraFiles;
   }
-  private async loadContent() {
+  public async loadContent() {
     this.originalCode = await fs.readFile(this.getSourcePath(), 'utf8');
   }
   private resetExtraFiles() {

@@ -5,9 +5,8 @@ const wxmlHelper = require('./wxml');
 const babel = require('babel-core');
 const bridge = require('../bridge');
 const path = require('path');
-const functionAliasConfig = require('./functionNameAliasConfig');
 
-const TARGET = require('../utils').argv.target;
+const TARGET = require('./utils').argv.target;
 
 const EXTENSIONS = {
     baidu: '.swan',
@@ -44,7 +43,7 @@ exports.exit = function(astPath, type, componentName, modules) {
                 plugins: [
                     [
                         require('babel-plugin-transform-react-jsx'),
-                        { pragma: functionAliasConfig.h.variableDeclarator }
+                        { pragma: 'h' }
                     ]
                 ]
             });

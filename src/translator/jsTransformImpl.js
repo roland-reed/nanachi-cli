@@ -3,7 +3,8 @@ const generate = require('babel-generator').default;
 const path = require('path');
 const helpers = require('./helpers');
 const queue = require('./queue');
-const utils = require('./utils');
+const utils = require('./helpers/utils');
+const TARGET = require('./helpers/utils').argv.target;
 const deps = require('./deps');
 const template = require('babel-template');
 const inlineElement = {
@@ -34,7 +35,7 @@ module.exports = {
             var methodName = astPath.node.key.name;
             modules.walkingMethod = methodName;
             if (methodName !== 'constructor') {
-                var fn = helpers.method(astPath, methodName);
+                var fn = utils.createMethod(astPath, methodName);
                 modules.thisMethods.push(fn);
             } else {
                 var node = astPath.node;
@@ -67,7 +68,7 @@ module.exports = {
                     modules
                 );
                 astPath.node.body.body.unshift(
-                    template(helpers.functionNameAliasConfig.h.init)()
+                    template(utils.shortcutOfCreateElement())()
                 );
             }
         }
@@ -92,7 +93,7 @@ module.exports = {
                 modules.componentType === 'Component'
             ) {
                 astPath.node.body.body.unshift(
-                    template(helpers.functionNameAliasConfig.h.init)()
+                    template(utils.shortcutOfCreateElement())()
                 );
             }
         }
@@ -110,12 +111,15 @@ module.exports = {
             }
         }
 
-        if (/\.(less|scss)$/.test(path.extname(source))) {
+        if (/\.(less|scss|sass|css)$/.test(path.extname(source))) {
             astPath.remove();
         }
 
         specifiers.forEach(item => {
             //重点，保持所有引入的组件名及它们的路径，用于<import />
+            if (/\.js$/.test(source)){
+                source = source.replace(/\.js$/, '');
+            }
             modules.importComponents[item.local.name] = source;
         });
     },
@@ -135,24 +139,24 @@ module.exports = {
             let declaration = astPath.node.declaration;
             if (!declaration) {
                 var map = astPath.node.specifiers.map(function(el) {
-                    return helpers.exportExpr(el.local.name);
+                    return utils.exportExpr(el.local.name);
                 });
                 astPath.replaceWithMultiple(map);
             } else if (declaration.type === 'Identifier') {
                 astPath.replaceWith(
-                    helpers.exportExpr(declaration.name, declaration.name)
+                    utils.exportExpr(declaration.name, declaration.name)
                 );
             } else if (declaration.type === 'VariableDeclaration') {
                 var id = declaration.declarations[0].id.name;
                 declaration.kind = 'var'; //转换const,let为var
                 astPath.replaceWithMultiple([
                     declaration,
-                    helpers.exportExpr(id)
+                    utils.exportExpr(id)
                 ]);
             } else if (declaration.type === 'FunctionDeclaration') {
                 astPath.replaceWithMultiple([
                     declaration,
-                    helpers.exportExpr(id)
+                    utils.exportExpr(id)
                 ]);
             }
         }
@@ -187,14 +191,14 @@ module.exports = {
                 }
                 jsonStr = JSON.stringify(config, null, 4);
 
-                queue.pageConfig.push({
+                queue.push({
                     type: 'json',
-                    sourcePath: modules.sourcePath,
                     path: modules.sourcePath
                         .replace(/\/src\//, '/dist/')
                         .replace(/\.js$/, '.json'),
                     code: jsonStr
                 });
+                utils.emit('build');
             }
             if (astPath.node.static) {
                 var keyValue = t.ObjectProperty(
@@ -218,20 +222,7 @@ module.exports = {
             astPath.remove();
         }
     },
-    AssignmentExpression(astPath, state) {
-        let modules = utils.getAnu(state);
-        // 转换微信小程序component的properties对象为defaultProps
-        let left = astPath.node.left;
-        if (
-            modules.className &&
-            t.isMemberExpression(left) &&
-            left.object.name === modules.className &&
-            left.property.name === 'defaultProps'
-        ) {
-            //helpers.defaultProps(astPath.node.right.properties, modules);
-            astPath.remove();
-        }
-    },
+    AssignmentExpression() {},
     CallExpression: {
         enter(astPath, state) {
             let node = astPath.node;
@@ -390,24 +381,28 @@ module.exports = {
     },
     JSXAttribute: {
         enter: function(astPath, state) {
-           
             let attrName = astPath.node.name.name;
             let attrValue = astPath.node.value;
-          
+            let parentPath = astPath.parentPath;
             if (t.isJSXExpressionContainer(attrValue)) {
                 let modules = utils.getAnu(state);
-                let attrs = astPath.parentPath.node.attributes;
-                var expr = attrValue.expression;
+                let attrs = parentPath.node.attributes;
+                let expr = attrValue.expression;
+                let nodeName = parentPath.node.name.name;
                 if (/^(?:on|catch)[A-Z]/.test(attrName)) {
-                    var n = attrName.charAt(0) == 'o' ? 2 : 5;
-                    var eventName = attrName.slice(n).toLowerCase();
-                    if (eventName == 'click') {
-                        //onClick映射为onTap, catchClick映射为catchTap
-                        astPath.node.name.name = n == 2 ? 'onTap' : 'catchTap';
-                        eventName = 'tap';
+                    var prefix = attrName.charAt(0) == 'o' ? 'on' : 'catch';
+                    var eventName = attrName.replace(prefix, '');
+                    var otherEventName = utils.getEventName(
+                        eventName,
+                        nodeName,
+                        TARGET
+                    );
+                    if (otherEventName !== eventName) {
+                        astPath.node.name.name = prefix + otherEventName;
                     }
+
                     //事件存在的标签，必须添加上data-eventName-uid, data-class-uid, data-instance-uid
-                    var name = `data-${eventName}-uid`;
+                    var name = `data-${eventName.toLowerCase()}-uid`;
                     attrs.push(
                         utils.createAttribute(
                             name,
@@ -445,12 +440,17 @@ module.exports = {
                 } else if (attrName === 'style') {
                     //将动态样式封装到React.toStyle中
                     var styleType = expr.type;
+                    var MemberExpression = styleType === 'MemberExpression';
                     var isIdentifier = styleType === 'Identifier';
-                    if (isIdentifier || styleType === 'ObjectExpression') {
-                        var ii = modules.indexArr ?  modules.indexArr.join('+\'-\'+') : ""
+                    if (isIdentifier || MemberExpression || styleType === 'ObjectExpression') {
+                        var ii = modules.indexArr
+                            ? modules.indexArr.join('+\'-\'+')
+                            : '';
                         var styleRandName =
-                            `'style${utils.createUUID(astPath)}'` + (ii ? ' +' +ii : '');
+                            `'style${utils.createUUID(astPath)}'` +
+                            (ii ? ' +' + ii : '');
                         //Identifier 处理形如 <div style={formItemStyle}></div> 的style结构
+                        //MemberExpression 处理形如 <div style={this.state.styles.a}></div> 的style结构
                         //ObjectExpression 处理形如 style={{ width: 200, borderWidth: '1px' }} 的style结构
                         var styleName = isIdentifier
                             ? expr.name
@@ -473,10 +473,10 @@ module.exports = {
                         type === 'FunctionExpression' ||
                         type == 'ArrowFunctionExpression'
                     ) {
-                        var uuid = 'render'+utils.createUUID(astPath);
-                        attrs.push(utils.createAttribute('renderUid',uuid));
-                        astPath.parentPath.renderProps = attrValue;
-                        astPath.parentPath.renderUid = uuid;
+                        var uuid = 'render' + utils.createUUID(astPath);
+                        attrs.push(utils.createAttribute('renderUid', uuid));
+                        parentPath.renderProps = attrValue;
+                        parentPath.renderUid = uuid;
                         modules.is = [];
                     }
                 }

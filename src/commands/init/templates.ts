@@ -14,7 +14,7 @@ interface InterfaceTEMPLATE {
 const DEFAULT_TEMPLATES: InterfaceTEMPLATE = {
   qunar: {
     value: 'qunar',
-    name: '默认模板',
+    name: '去哪儿网',
     checkout: 'qunar',
     url: 'https://github.com/YMFE/nanachi-template.git'
   },

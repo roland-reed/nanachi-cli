@@ -5,8 +5,8 @@ const generate = require('babel-generator').default;
 const attrValueHelper = require('./attrValue');
 const attrNameHelper = require('./attrName');
 const logicHelper = require('./logic');
-const utils = require('../utils');
-const chineseHelper = require('./chinese');
+const utils = require('./utils');
+const chineseHelper = require('./utils/chinese');
 const slotHelper = require('./slot');
 
 var chineseHack = chineseHelper();

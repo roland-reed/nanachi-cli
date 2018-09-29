@@ -1,10 +1,10 @@
 const t = require('babel-types');
 const generate = require('babel-generator').default;
-const jsx = require('../utils');
+const jsx = require('./utils');
 const chalk = require('chalk');
 const { createElement, createAttribute } = jsx;
 
-const TARGET = require('../utils').argv.target
+const TARGET = require('./utils').argv.target
 const LOOP_COMMANDS = {
     wx: 'wx:for',
     baidu: 's-for',

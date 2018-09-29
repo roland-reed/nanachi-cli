@@ -4,13 +4,13 @@
 
 const generate = require('babel-generator').default;
 
-var rhyphen = /([a-z\d])([A-Z]+)/g;
+const rhyphen = /([a-z\d])([A-Z]+)/g;
 function hyphen(target) {
     //转换为连字符风格
     return target.replace(rhyphen, '$1-$2').toLowerCase();
 }
 
-function style(expr) {
+function getStyleString(expr) {
     var styleValue = expr.properties
         .map(function(node) {
             // const key = node.key.name;
@@ -28,4 +28,4 @@ function style(expr) {
     return styleValue;
 }
 
-module.exports = style;
+module.exports = getStyleString;

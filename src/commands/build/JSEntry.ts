@@ -38,6 +38,7 @@ export default class JSEntry extends Entry {
     });
   }
   public async process() {
+    await this.loadContent();
     this.parse();
     this.addRegeneratorRuntime();
     this.replaceImport();

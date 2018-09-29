@@ -1,4 +1,1 @@
-module.exports = {
-    wxml: [],
-    pageConfig: []
-};
+module.exports = [];

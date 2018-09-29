@@ -1,7 +1,7 @@
 const t = require('babel-types');
 const template = require('babel-template');
 const generate = require('babel-generator').default;
-const utils = require('../utils');
+const utils = require('./utils');
 
 module.exports = {
     enter(astPath, state) {

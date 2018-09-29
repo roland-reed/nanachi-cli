@@ -15,9 +15,7 @@ const ali: InterfaceCustomizedReactFileName = {
 };
 
 const baidu: InterfaceCustomizedReactFileName = {
-  // 专门为百度定制的 library 还未开发完成
-  // 暂时使用微信版
-  primary: 'ReactWX.js'
+  primary: 'ReactBu.js'
 };
 
 const customizedReacts: InterfaceCustomizedReactFileNames = {

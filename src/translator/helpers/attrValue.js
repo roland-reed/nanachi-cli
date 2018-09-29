@@ -1,7 +1,7 @@
-const TARGET = require('../utils').argv.target
+const TARGET = require('./utils').argv.target
 const t = require('babel-types');
 const generate = require('babel-generator').default;
-const styleHelper = require('./inlineStyle');
+const getStyleValue = require('./utils/getStyleValue');
 
 function bindEvent(astPath) {
     replaceWithExpr(astPath, 'dispatchEvent', true);
@@ -10,11 +10,8 @@ function bindEvent(astPath) {
 module.exports = function(astPath) {
     var expr = astPath.node.expression;
     var attrName = astPath.parent.name.name;
-    if (TARGET === 'ali') {
-        var isEvent = /^(on|catch)/.test(attrName);
-    } else {
-        var isEvent = /^(bind|catch)/.test(attrName);
-    }
+    var isEventRegex = TARGET == 'ali' ?  /^(on|catch)/:  /^(bind|catch)/;
+    var isEvent = isEventRegex.test(attrName);
     var attrValue = generate(expr).code;
     switch (astPath.node.expression.type) {
         case 'NumericLiteral': //11
@@ -75,7 +72,7 @@ module.exports = function(astPath) {
 			break;
         case 'ObjectExpression':
             if (attrName === 'style') {
-                let styleValue = styleHelper(expr);
+                let styleValue = getStyleValue(expr);
                 replaceWithExpr(astPath, styleValue, true);
             } else if (isEvent) {
                 throwEventValue(attrName, attrValue);

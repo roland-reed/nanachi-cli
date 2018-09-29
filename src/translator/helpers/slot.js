@@ -1,5 +1,5 @@
 var path = require('path');
-const jsx = require('../utils');
+const jsx = require('./utils');
 const generate = require('babel-generator').default;
 const prettifyXml = require('prettify-xml');
 const bridge = require('../bridge');
@@ -30,11 +30,9 @@ module.exports = function slotHelper(
         content: wxml,
         id: fragmentUid
     })
-    queue.wxml.push({
+    queue.push({
         type: 'wxml',
-        path: path.join(modules.fragmentPath,  fragmentUid + '.wxml'),
-        code: prettifyXml(wxml, {
-            indent: 2
-        })
+        path: path.join(modules.fragmentPath,  fragmentUid),
+        code: wxml
     });
 };
