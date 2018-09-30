@@ -36,12 +36,14 @@ interface InterfaceBuild {
   forceUpdateLibrary?: boolean;
 }
 export default class Build {
+  // 静默编译
   public readonly silent: boolean;
   // 编译目标
   public readonly target: string;
+  // 是否压缩
+  public readonly minify: boolean;
   private files: Map<string, Entry | JSEntry | Module>;
   private cwd: string;
-  private minify: boolean;
   private srcDir: string;
   private destDir: string;
   private assetsDir: string;
@@ -227,7 +229,7 @@ export default class Build {
   }
   private beforeStart() {
     this.spinner.info(
-      chalk`{bold.underline anu@${require('../package.json').version}}`
+      chalk`{bold.underline nanachi@${require('../package.json').version}}`
     );
   }
   private beforeExitLog() {

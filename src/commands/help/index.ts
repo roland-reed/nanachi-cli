@@ -1,9 +1,12 @@
-/* eslint no-console:off */
-const chalk = require('chalk');
+import chalk from 'chalk';
 const { version } = require('../package.json');
 
 const message = chalk`
   {bold.underline nanachi@v${version}}
+
+  {bold nanachi} {green.bold [-h --help]} 显示帮助
+
+  {bold nanachi} {green.bold help} 显示帮助
 
   {bold nanachi} {green.bold init} 初始化新项目
 
@@ -16,6 +19,5 @@ const message = chalk`
             {green.bold [-t --target]} 编译目标 {green.bold wx | ali | baidu} , 默认为 {green.bold wx}
             {green.bold [-u --force-update-library]} 强制拉取远程最新定制版 {green.bold React.js}`;
 
-module.exports = function() {
-  console.log(message);
-};
+// tslint:disable-next-line
+export default () => console.log(message);

@@ -8,6 +8,33 @@ const logicHelper = require('./logic');
 const utils = require('./utils');
 const chineseHelper = require('./utils/chinese');
 const slotHelper = require('./slot');
+const TARGET = require('./utils').argv.target
+
+const LOOP_COMMANDS = {
+    wx: 'wx:for',
+    baidu: 's-for',
+    ali: 'a:for'
+}
+const LOOP_ITEM_COMMANDS = {
+    wx: 'wx:for-item',
+    baidu: 's-for-item',
+    ali: 'a:for-item'
+}
+const LOOP_INDEX_COMMANDS = {
+    wx: 'wx:for-index',
+    baidu: 's-for-index',
+    ali: 'a:for-index'
+}
+const IF_COMMANDS = {
+    wx: 'wx:if',
+    baidu: 's-if',
+    ali: 'a:if'
+}
+const ELSE_COMMANDS = {
+    wx: 'wx:if',
+    baidu: 's-if',
+    ali: 'a:if'
+}
 
 var chineseHack = chineseHelper();
 /**
@@ -95,19 +122,19 @@ var visitor = {
                         attributes.push(
                             utils.createAttribute('is', is),
                             utils.createAttribute('data', '{{...data}}'),
-                            utils.createAttribute('wx:for', `{{components.${array}}}`),
-                            utils.createAttribute('wx:for-item', 'data'),
-                            utils.createAttribute('wx:for-index', 'index'),
+                            utils.createAttribute(LOOP_COMMANDS[TARGET], `{{components.${array}}}`),
+                            utils.createAttribute(LOOP_ITEM_COMMANDS[TARGET], 'data'),
+                            utils.createAttribute(LOOP_INDEX_COMMANDS[TARGET], 'index'),
                             utils.createAttribute('wx:key', utils.genKey(key))
                         );
                     } else {
                         attributes.push(
                             utils.createAttribute('is', is),
                             utils.createAttribute(
-                                'wx:for',
+                                LOOP_COMMANDS[TARGET],
                                 `{{components['${array}'+${indexArr} ]}}`
                             ),
-                            utils.createAttribute('wx:for-item', 'data'),
+                            utils.createAttribute(LOOP_ITEM_COMMANDS[TARGET], 'data'),
                             utils.createAttribute('data', '{{...data}}'),
                             utils.createAttribute('wx:key', utils.genKey(key))
                         );

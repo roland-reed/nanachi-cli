@@ -18,66 +18,65 @@ export interface InterfaceAnswers {
 
 export default async function init() {
   const { templates, choices: templateChoices } = await getTemplatesData();
-  try {
-    const {
-      name,
-      template,
-      registry,
-      git = false
-    }: InterfaceAnswers = await inquirer.prompt([
-      {
-        message: 'Name your project',
-        name: 'name',
-        type: 'input',
-        validate(v: string) {
-          const validation = validateNpmPackageName(v);
-          if (validation.validForNewPackages) return true;
-          return validation.errors.join('. ');
-        }
-      },
-      {
-        choices: templateChoices,
-        message: 'Choose a template',
-        name: 'template',
-        type: 'list'
-      },
-      {
-        choices: RegistryChoices,
-        default: defaultRegistry,
-        message: 'Choose a registry',
-        name: 'registry',
-        type: 'list'
-      },
-      {
-        message: 'Need a git repository?',
-        type: 'confirm',
-        name: 'git'
+  const {
+    name,
+    template,
+    registry,
+    git = false
+  }: InterfaceAnswers = await inquirer.prompt([
+    {
+      message: 'Name your project',
+      name: 'name',
+      type: 'input',
+      validate(v: string) {
+        const validation = validateNpmPackageName(v);
+        if (validation.validForNewPackages) return true;
+        return validation.errors.join('. ');
       }
-    ]);
+    },
+    {
+      choices: templateChoices,
+      message: 'Choose a template',
+      name: 'template',
+      type: 'list'
+    },
+    {
+      choices: RegistryChoices,
+      default: defaultRegistry,
+      message: 'Choose a registry',
+      name: 'registry',
+      type: 'list'
+    },
+    {
+      message: 'Need a git repository?',
+      type: 'confirm',
+      name: 'git'
+    }
+  ]);
 
-    const gitRepository = templates[template].url;
+  const gitRepository = templates[template].url;
 
-    spinner.start(
-      chalk`cloning into {cyan ${name}} from {cyan ${gitRepository}}`
-    );
+  spinner.start(
+    chalk`cloning into {cyan ${name}} from {cyan ${gitRepository}}`
+  );
 
-    await gitClone({
-      checkout: templates[template].checkout,
-      gitRepository,
-      target: name,
-      git
-    });
+  await gitClone({
+    checkout: templates[template].checkout,
+    gitRepository,
+    target: name,
+    git
+  });
 
-    spinner.succeed('Template cloned');
+  spinner.succeed('Template cloned');
 
-    await changePackageName(process.cwd(), name);
+  await changePackageName(process.cwd(), name);
 
-    await install(registry, path.resolve(process.cwd(), name));
+  await install(registry, path.resolve(process.cwd(), name));
 
-    spinner.stop();
+  spinner.stop();
 
-    // tslint:disable-next-line
-    console.log(chalk`
+  // tslint:disable-next-line
+  console.log(chalk`
       Template has been cloned to {cyan ${name}}.
 
       Start the project by executing the following commands:
@@ -85,7 +84,4 @@ export default async function init() {
       {cyan cd} ${name}
       {cyan nanachi} start
     `);
-  } catch (error) {
-    throw error;
-  }
 }

@@ -1,9 +1,11 @@
 import Build from './Build';
 
 export interface InterfaceBuildOptions {
-  cwd: string;
-  forceUpdateLibrary: boolean;
-  minify: boolean;
+  cwd?: string;
+  forceUpdateLibrary?: boolean;
+  minify?: boolean;
+  target: 'wx' | 'ali' | 'baidu';
+  silent?: boolean;
 }
 
 async function start(options: InterfaceBuildOptions) {
