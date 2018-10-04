@@ -22,7 +22,7 @@
 
 - **类型** `boolean`
 - **默认值** `false`
-- **说明** 是否强制从远程仓库拉取最新版 `runtime` 库文件
+- **说明** 是否强制从远程仓库拉取最新版 `runtime` 库文件。
 
 参数 `[t --target]`
 
@@ -42,13 +42,13 @@
 
 在项目根目录执行 `nanachi build` 编译项目。
 
-参数 `[-u --force-update-library]` 以及参数 `[t --target]` 与 `start` 命令一致。
+参数 `[-u --force-update-library]` 以及参数 `[-t --target]` 与 `start` 命令一致。
 
 参数 `[-s --silent]`
 
 - **类型** `boolean`
 - **默认值** `false`
-- **说明** 是否静默编译
+- **说明** 是否开启静默编译。静默编译模式下，不会有任何日志输出。
 
 ![nanachi build](images/build.png)
 
