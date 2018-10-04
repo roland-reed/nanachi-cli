@@ -1,3 +1,1 @@
-import cli from './cli/index';
-
-cli();
+export { default } from './cli/index';
