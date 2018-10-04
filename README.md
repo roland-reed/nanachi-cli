@@ -65,7 +65,7 @@ npm run dev:ts
 # 新开一个终端
 npm run dev:js
 
-# 如果本地安装了 yarn
+# 如果安装了 yarn
 yarn
 yarn link
 
@@ -84,7 +84,7 @@ yarn run dev:js
 
 ![dev:js](images/dev-js.png)
 
-正常情况下，执行 `npm link` 或者 `yarn link` 之后，`nanachi` 命令指向的是开发目录下的 `bin/index.js`，该文件只有一行，即导出 `lib/index.js`，因此只要开发目录下的 `lib/index.js` 变化了，`nanachi` 命令使用的就会是最新代码，不需要执行 `npm unlink` 再重新执行 `npm link`。
+正常情况下，执行 `npm link` 或者 `yarn link` 之后，`nanachi` 命令指向的是开发目录下的 `bin/index.js`，该文件只有一行，即导出 `lib/index.js`，因此只要开发目录下的 `lib/index.js` 变化了，`nanachi` 命令使用的就会是最新代码，不需要执行 `npm unlink` 再重新执行 `npm link`。
 
 ## CREDIT
 
