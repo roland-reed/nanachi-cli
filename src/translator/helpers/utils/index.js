@@ -109,7 +109,7 @@ let utils = {
         if (/\{\{/.test(key)) {
             key = key.slice(2, -2);
         }
-        return key.indexOf('.') > 0 ? key.split('.').pop() : '*this';
+        return key.indexOf('.') > 0 ? key.split('.').pop() : '{{index}}';
     },
     getAnu(state) {
         return state.file.opts.anu;
